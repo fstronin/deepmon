@@ -75,3 +75,57 @@ export function appendSample(state, sample, {intervalMinutes}) {
     day.samples += 1;
     return {ok: true, state: next};
 }
+
+export function prune(state, {now, sampleRetentionDays = 7, dayRetentionDays = 400}) {
+    const next = clone(state);
+    const sampleCutoff = now - sampleRetentionDays * 86400;
+    next.samples = next.samples.filter(sample => sample.t >= sampleCutoff);
+
+    const dayCutoff = localDate(now - dayRetentionDays * 86400);
+    for (const date of Object.keys(next.days)) {
+        if (date < dayCutoff)
+            delete next.days[date];
+    }
+    return next;
+}
+
+export function rebuild(state, {now, intervalMinutes, sampleRetentionDays = 7, dayRetentionDays = 400}) {
+    const next = clone(state);
+    const windowStart = localDate(now - sampleRetentionDays * 86400);
+    for (const date of Object.keys(next.days)) {
+        if (date >= windowStart)
+            delete next.days[date];
+    }
+
+    const intervalSeconds = intervalMinutes * 60;
+    let previous = null;
+    for (const sample of next.samples) {
+        const date = localDate(sample.t);
+        let day = next.days[date];
+        if (!day) {
+            day = {
+                spend: 0,
+                topup: 0,
+                close: sample.total,
+                samples: 0,
+                approx: localTimeOfDay(sample.t) > intervalSeconds + FIRST_SAMPLE_SLACK_SECONDS,
+                coveredFrom: sample.t,
+            };
+            next.days[date] = day;
+        }
+        if (previous) {
+            const delta = sample.total - previous.total;
+            if (delta < 0)
+                day.spend += -delta;
+            else if (delta > 0)
+                day.topup += delta;
+            if (sample.t - previous.t > 2 * intervalSeconds)
+                day.approx = true;
+        }
+        day.close = sample.total;
+        day.samples += 1;
+        previous = sample;
+    }
+
+    return prune(next, {now, sampleRetentionDays, dayRetentionDays});
+}

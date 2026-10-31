@@ -64,6 +64,14 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
             }
             : {today: '—', week: '—', month: '—'},
         chart: summary?.chart ?? [],
+        extras: summary
+            ? summary.balances
+                .filter(item => item.currency !== summary.currency)
+                .map(item => format(item.total, item.currency))
+            : [],
+        limitLabel: summary && limitCents > 0
+            ? S.popup.limit.replace('{limit}', format(limitCents, summary.currency))
+            : S.popup.limit.replace('{limit}', '—'),
         statusText,
         errorText: errorText(error),
         noticeText: notice ?? '',

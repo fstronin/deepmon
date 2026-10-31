@@ -1,4 +1,4 @@
-.PHONY: test test-net schemas clean
+.PHONY: test test-net schemas verify-ui clean
 
 test:
 	gjs -m tests/run.js --skip net.test.js
@@ -11,3 +11,6 @@ schemas:
 
 clean:
 	rm -rf tests/tmp
+
+verify-ui:
+	bash tests/headless.sh

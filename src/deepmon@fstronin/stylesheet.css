@@ -1,0 +1,77 @@
+.deepmon-panel-label {
+    margin: 0 4px;
+}
+
+.deepmon-over-limit {
+    color: #f5c211;
+}
+
+.deepmon-stale {
+    opacity: 0.55;
+}
+
+.deepmon-header {
+    padding-bottom: 6px;
+}
+
+.deepmon-balance {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.deepmon-caption {
+    font-size: 0.85em;
+    opacity: 0.7;
+}
+
+.deepmon-status {
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.deepmon-periods {
+    padding: 4px 0;
+}
+
+.deepmon-period-value {
+    font-weight: bold;
+}
+
+.deepmon-chart {
+    height: 48px;
+    spacing: 3px;
+    padding-top: 4px;
+}
+
+.deepmon-bar {
+    background-color: -st-accent-color;
+    border-radius: 2px 2px 0 0;
+    min-width: 4px;
+}
+
+.deepmon-bar-empty {
+    opacity: 0.35;
+}
+
+.deepmon-bar-approx {
+    opacity: 0.6;
+}
+
+.deepmon-chart-labels {
+    padding-top: 2px;
+}
+
+.deepmon-chart-date {
+    font-size: 0.75em;
+    opacity: 0.6;
+}
+
+.deepmon-error {
+    color: #ff6b6b;
+    font-size: 0.85em;
+}
+
+.deepmon-notice {
+    font-size: 0.85em;
+    opacity: 0.8;
+}

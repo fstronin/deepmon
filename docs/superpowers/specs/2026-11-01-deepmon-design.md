@@ -15,6 +15,7 @@
 Входит в v1:
 
 - опрос `GET /user/balance` по таймеру и при открытии меню;
+- выбор валюты учёта: авто по ответу API или закреплённая в настройке;
 - локальная история снапшотов баланса и дневные агрегаты;
 - сводка: баланс, трата за сегодня / 7 дней / 30 дней, столбцы по последним N дням;
 - уведомление о превышении дневного порога;
@@ -163,6 +164,11 @@ README.md
   предупреждение «баланс исчерпан или недоступен».
 - `granted_balance` / `topped_up_balance` разбираются, но в учёте расходов не участвуют;
   показываются в popup мелким текстом, если отличаются от нуля.
+- Выбор валюты: `selectBalance(balances, preferred)` → `{ok: true, selected}` либо
+  `{ok: false, code: 'currency-unavailable', available}`. `preferred` — настройка
+  `currency`: пусто → `balances[0]` (авто); задано и присутствует → эта запись; иначе
+  `currency-unavailable` с перечнем доступных кодов. Выбор повторяется на каждом опросе,
+  поэтому валюта, появившаяся в ответе позже, подхватывается без перезапуска.
 
 ## 6. История расходов
 
@@ -214,10 +220,23 @@ delta = 0  →  ничего
 
 ### 6.4 Валюта
 
-`primaryCurrency` фиксируется первым успешным снапшотом и равен `balances[0].currency`.
-Снапшот, у которого `balances[0].currency` отличается от зафиксированной, не применяется: `appendSample` возвращает
-`{ok: false, code: 'currency-mismatch'}` и состояние не меняется. Тихой перезаписи или
-сброса истории нет; пользователь удаляет `history.json` вручную (в README).
+Учёт ведётся ровно в одной валюте — `primaryCurrency` из §6.1. Валюта выбирается
+функцией `selectBalance` (§5) и может быть закреплена настройкой `currency`.
+
+- `History.adoptCurrency(state, currency)` → `{state, notice, archivedCurrency}` — чистая
+  функция без доступа к файлам:
+  - история пуста → `primaryCurrency = currency`, `notice = null`, `archivedCurrency = null`;
+  - `currency === state.primaryCurrency` → состояние без изменений;
+  - иначе `archivedCurrency = state.primaryCurrency`, состояние — `empty()` с
+    `primaryCurrency = currency`, `notice = 'валюта изменена: история по CNY отложена в архив'`.
+- Переименование файла делает адаптер: `SpendingStore.archive(currency)` переименовывает
+  `history.json` в `history.json.archive-<currency>-<unixtime>`; вызов происходит в use case
+  до записи нового состояния.
+- Смена валюты не ошибка и не требует ручного удаления файлов: данные сохраняются в
+  архиве, новый учёт начинается с текущего снапшота. Смешивания валют в одной истории
+  не бывает.
+- Если настроенная валюта отсутствует в ответе API — код `currency-unavailable`,
+  история и последние данные не меняются (§13).
 
 ### 6.5 Retention и идемпотентность
 
@@ -250,6 +269,7 @@ delta = 0  →  ничего
 }
 ```
 
+- `currency` — `state.primaryCurrency`: выбранная валюта, не обязательно первая в ответе.
 - `today.spend` — `days[date(now)].spend` или 0 при отсутствии.
 - `week` — сумма `days` за `[today-6 … today]`; `month` — за `[today-29 … today]`.
 - `chart` заполняется нулями для отсутствующих дней (`hasData: false`), чтобы столбцы не
@@ -270,11 +290,14 @@ run():
      (отпечаток держим в памяти расширения; после рестарта допускается одна проверка)
   3. res = source.request({key})                  // {ok, snapshot} | {ok:false, code}
      ошибка → {error} (история и lastSuccessAt не меняются)
-  4. appended = History.appendSample(state, sample, {intervalMinutes, tz})
-     currency-mismatch → {error}, файл не пишется
-  5. state = History.rebuild(...); store.save(state)   // синхронно, до отрисовки и уведомления
-  6. summary = History.summarize(state, now, {chartDays})
-  7. return {summary, error: null}
+  4. sel = selectBalance(snapshot.balances, settings.currency)
+     currency-unavailable → {error}, история не меняется
+  5. {state, notice, archivedCurrency} = History.adoptCurrency(state, sel.currency)
+     archivedCurrency → store.archive(archivedCurrency), затем новый учёт
+  6. state = History.appendSample(state, {...sel.selected}, {intervalMinutes, tz})
+  7. state = History.rebuild(...); store.save(state)   // синхронно, до отрисовки и уведомления
+  8. summary = History.summarize(state, now, {chartDays})
+  9. return {summary, notice, error: null}
 ```
 
 `extension.js` после `run()`: обновляет индикатор, затем `DailyLimit.evaluate(...)`, при
@@ -375,6 +398,7 @@ Prefs-окно: строка статуса ключа (источник + от�
 | `refresh-minutes` | `u` | 15 | 1…120 | интервал опроса, минуты |
 | `daily-limit` | `d` | 1.0 | 0…10000 | дневной порог в основной валюте; `0` — выключено |
 | `daily-limit-enabled` | `b` | `true` | — | уведомления о превышении порога |
+| `currency` | `s` | `""` | 3 заглавные буквы или пусто | валюта учёта; пусто — авто (первая в ответе) |
 | `panel-mode` | `s` (enum `both`/`balance`/`spend`) | `both` | — | что видно в панели |
 | `chart-days` | `u` | 14 | 7…90 | длина графика |
 | `api-base-url` | `s` | `https://api.deepseek.com` | — | база API; используется mock-сервером и прокси |
@@ -422,11 +446,15 @@ platform.deepseek.com            (Gio.AppInfo.launch_default_for_uri)
 Настройки                        (extension.openPreferences())
 ```
 
+Крупная сумма — выбранная валюта (`currency` или авто); остальные валюты из ответа — строками
+ниже с кодом, чтобы было видно, что именно не учитывается.
+
 Индикатор получает только view-модель и колбэки (`onRefresh`, `onOpenPrefs`,
 `onOpenPlatform`); объект `Extension` и адаптеры внутрь панели не передаются.
 
-Дополнительно при наличии: строка предупреждения (`storage`, `currency-mismatch`,
-`insecure-permissions`) с текстом причины; `granted`/`toppedUp` — только если ненулевые.
+Дополнительно при наличии: строка предупреждения (`storage`, `insecure-permissions`) с
+текстом причины; `notice` от смены валюты («история по CNY отложена в архив»);
+`granted`/`toppedUp` — только если ненулевые.
 
 ### 12.3 График
 
@@ -452,6 +480,8 @@ platform.deepseek.com            (Gio.AppInfo.launch_default_for_uri)
 - «Панель»: `Adw.ComboRow` «Показывать» (Баланс и трата / Только баланс / Только трата),
   `Adw.SpinRow` «Дней на графике» (7…90).
 - «Ключ»: статус источника и отпечатка, кнопки сохранения/удаления из связки.
+- «Валюта»: `Adw.EntryRow` «Валюта (код; пусто — авто)», валидация `^[A-Z]{3}$`,
+  пусто допустимо; при смене значения на другое — архив прежней истории (§6.4).
 
 Строки создаются при каждом открытии prefs: модульный кэш `_('...')` запрещён — в шелле
 `gettext` бросает исключение при вычислении модуля.
@@ -472,13 +502,15 @@ platform.deepseek.com            (Gio.AppInfo.launch_default_for_uri)
 | `network` | таймаут, DNS, TLS | `deepmon-stale` | «нет связи с HH:MM» | по таймеру |
 | `server` | 5xx | `deepmon-stale` | «ошибка сервера (5xx)» | по таймеру |
 | `parse` | не JSON / нет `balance_infos` | `deepmon-stale` | «неожиданный ответ API» | по таймеру |
-| `currency-mismatch` | сменилась основная валюта | `deepmon-stale` | причина + «удалите history.json» | по таймеру, запись не выполняется |
+| `currency-unavailable` | настроенной валюты нет в ответе API | `deepmon-stale` | «валюта USD не входит в ответ (есть: CNY)» | по таймеру, история не меняется |
 | `storage` | не удалось прочитать/записать историю | цифры актуальны | предупреждение с путём | по таймеру |
 
 Правила: таймаут запроса 30 с; не более одного запроса одновременно; бэкоффа нет
 (фиксированный интервал — меньше состояний, а 429/5xx у DeepSeek редки); уведомлений об
 ошибках нет (иначе спам), ошибка живёт в popup; последние успешные данные не стираются
 при ошибке.
+Смена валюты — не ошибка, а `notice` (§6.4): одна строка в popup до следующего успешного
+опроса, панель не деградирует.
 
 ## 14. Упаковка
 
@@ -533,8 +565,8 @@ Dev-цикл (без sudo, без пакета):
 | Файл | Обязательные случаи |
 |---|---|
 | `money.test.js` | `"110.00"→11000`, `"0.1"→10`, нечисловое → `null`; форматирование `¥118.40`, код валюты без символа; отрицательные центы |
-| `balance.test.js` | фикстура ответа из документации; `is_available:false` — валидный снапшот; пустой `balance_infos` → `parse`; `total_balance` не число → `parse` |
-| `history.test.js` | уменьшение → `spend`; увеличение → `topup`, не отрицательный `spend`; пара через полночь попадает в день `cur`; разрыв `> 2×интервала` → `approx`; первый снапшот дня позже порога → `approx`; retention снапшотов 7 дней и дней 400; `rebuild` идемпотентен; смена валюты → `currency-mismatch`, состояние не изменилось; битый JSON → `empty()` + `.corrupt`; сводка: пустая история даёт `hasData:false` и нули; `chart` всегда `chartDays` точек |
+| `balance.test.js` | фикстура ответа из документации; `is_available:false` — валидный снапшот; пустой `balance_infos` → `parse`; `total_balance` не число → `parse`; `selectBalance`: пустая настройка → первая запись, заданная → закреплена, отсутствующая → `currency-unavailable` с перечнем |
+| `history.test.js` | уменьшение → `spend`; увеличение → `topup`, не отрицательный `spend`; пара через полночь попадает в день `cur`; разрыв `> 2×интервала` → `approx`; первый снапшот дня позже порога → `approx`; retention снапшотов 7 дней и дней 400; `rebuild` идемпотентен; `adoptCurrency`: пустая история принимает валюту; смена возвращает `archivedCurrency = 'CNY'` и `notice`; совпадение валюты состояние не меняет; `store.archive` переименовывает `history.json` в `history.json.archive-CNY-<t>`; битый JSON → `empty()` + `.corrupt`; сводка: пустая история даёт `hasData:false` и нули; `chart` всегда `chartDays` точек |
 | `dailyLimit.test.js` | все семь строк таблицы §9 |
 | `store.test.js` | round-trip; атомарная запись (после `save` нет `*.tmp`); каталог создаётся; ошибка записи → код `storage` (путь, у которого родитель — обычный файл) |
 | `key.test.js` | формат ключа `sk-…`; `0600` читается; `0644` → `insecure-permissions`; пустой файл → `no-key`; отпечаток `sha256` стабилен |
@@ -576,7 +608,8 @@ UI: headless-шелл (`dbus-run-session`, `gnome-shell --wayland --headless`) �
 - Лицензия MIT; владелец репозитория — fstronin.
 - Один аккаунт и один ключ; несколько ключей — вне scope.
 - Точность суточной траты равна интервалу опроса; дни с разрывами помечаются `≈`.
-- Валюта фиксируется первой; смена валюты требует ручного удаления истории.
+- Валюта учёта: авто (первая в ответе API) или закреплённая настройкой `currency`;
+  смена валюты архивирует прежнюю историю автоматически и начинает новый учёт.
 - Уведомление — одно на день на значение порога; об ошибках не уведомляем.
 - Бэкоффа нет; интервал неизменен.
 - Пакет ставится системно; пользовательская dev-копия должна быть удалена.

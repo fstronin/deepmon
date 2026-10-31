@@ -25,6 +25,9 @@ export const S = {
         title: 'DeepSeek: расходы',
         body: 'Сегодня {spend} — выше порога {limit}',
     },
+    notice: {
+        currencyChanged: 'валюта изменена: история по {currency} отложена в архив',
+    },
     errors: {
         'no-key': 'ключ не задан: deepmon-key set',
         'insecure-permissions': 'права файла ключа шире 0600: chmod 600 {path}',

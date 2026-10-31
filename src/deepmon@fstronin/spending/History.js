@@ -1,5 +1,7 @@
 // Домен истории расходов: снапшоты баланса, пары, дневные агрегаты.
 // Без GI: даты считаются локальными компонентами Date, деньги — центы.
+import {S} from '../strings.js';
+
 const VERSION = 1;
 const FIRST_SAMPLE_SLACK_SECONDS = 300;
 
@@ -182,4 +184,44 @@ export function summarize(state, now, {chartDays, isAvailable = false}) {
         chart,
         updatedAt: state.lastSuccessAt,
     };
+}
+
+export function adoptCurrency(state, currency) {
+    if (state.primaryCurrency === currency)
+        return {state: clone(state), notice: null, archivedCurrency: null};
+
+    if (state.primaryCurrency === null)
+        return {state: {...clone(state), primaryCurrency: currency}, notice: null, archivedCurrency: null};
+
+    const archived = state.primaryCurrency;
+    const fresh = empty();
+    fresh.primaryCurrency = currency;
+    return {
+        state: fresh,
+        notice: S.notice.currencyChanged.replace('{currency}', archived),
+        archivedCurrency: archived,
+    };
+}
+
+export function serialize(state) {
+    return JSON.stringify(state, null, 2);
+}
+
+export function deserialize(text) {
+    let parsed;
+    try {
+        parsed = JSON.parse(text);
+    } catch (e) {
+        return {ok: false, code: 'corrupt', detail: `не JSON: ${e.message}`};
+    }
+
+    if (parsed?.version !== VERSION)
+        return {ok: false, code: 'corrupt', detail: `версия ${parsed?.version}`};
+    if (!Array.isArray(parsed.samples) || typeof parsed.days !== 'object' || parsed.days === null ||
+        typeof parsed.alerts !== 'object' || parsed.alerts === null)
+        return {ok: false, code: 'corrupt', detail: 'структура истории не соответствует версии'};
+    if (parsed.primaryCurrency !== null && typeof parsed.primaryCurrency !== 'string')
+        return {ok: false, code: 'corrupt', detail: 'primaryCurrency не строка'};
+
+    return {ok: true, state: parsed};
 }

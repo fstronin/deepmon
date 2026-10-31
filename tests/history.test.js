@@ -110,6 +110,37 @@ export const tests = [
         t.eq(s.today.approx, true);
         t.eq(s.chart[13].approx, true);
     }},
+    {name: 'adoptCurrency: пустая история принимает валюту', fn: t => {
+        const r = H.adoptCurrency(H.empty(), 'USD');
+        t.eq(r.state.primaryCurrency, 'USD');
+        t.eq(r.archivedCurrency, null);
+        t.eq(r.notice, null);
+    }},
+    {name: 'adoptCurrency: совпадение ничего не меняет', fn: t => {
+        const {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 0, 1), 1000), {intervalMinutes: 15});
+        const r = H.adoptCurrency(state, 'CNY');
+        t.deepEq(r.state, state);
+        t.eq(r.archivedCurrency, null);
+    }},
+    {name: 'adoptCurrency: смена архивирует прежнюю', fn: t => {
+        const {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 0, 1), 1000), {intervalMinutes: 15});
+        const r = H.adoptCurrency(state, 'USD');
+        t.eq(r.archivedCurrency, 'CNY');
+        t.eq(r.state.primaryCurrency, 'USD');
+        t.eq(r.state.samples.length, 0);
+        t.eq(r.state.days['2026-11-01'], undefined);
+        t.ok(r.notice.includes('CNY'), 'notice содержит прежнюю валюту');
+    }},
+    {name: 'сериализация туда-обратно', fn: t => {
+        const {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 0, 1), 1000), {intervalMinutes: 15});
+        const back = H.deserialize(H.serialize(state));
+        t.ok(back.ok, 'ok');
+        t.deepEq(back.state, state);
+    }},
+    {name: 'deserialize: битый JSON и чужая версия', fn: t => {
+        t.eq(H.deserialize('{oops').code, 'corrupt');
+        t.eq(H.deserialize('{"version":99,"samples":[]}').code, 'corrupt');
+    }},
 ];
 
 function sample(t, total) {

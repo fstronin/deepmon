@@ -129,3 +129,57 @@ export function rebuild(state, {now, intervalMinutes, sampleRetentionDays = 7, d
 
     return prune(next, {now, sampleRetentionDays, dayRetentionDays});
 }
+
+function shiftDays(unixSeconds, deltaDays) {
+    const d = new Date(unixSeconds * 1000);
+    d.setDate(d.getDate() + deltaDays);
+    return localDate(d.getTime() / 1000);
+}
+
+export function summarize(state, now, {chartDays, isAvailable = false}) {
+    const sumWindow = size => {
+        let spend = 0;
+        let daysWithData = 0;
+        for (let back = 0; back < size; back++) {
+            const day = state.days[shiftDays(now, -back)];
+            if (!day)
+                continue;
+            spend += day.spend;
+            daysWithData += 1;
+        }
+        return {spend, daysWithData};
+    };
+
+    const todayDate = shiftDays(now, 0);
+    const today = state.days[todayDate];
+    const chart = [];
+    for (let back = chartDays - 1; back >= 0; back--) {
+        const date = shiftDays(now, -back);
+        const day = state.days[date];
+        chart.push({
+            date,
+            spend: day?.spend ?? 0,
+            approx: day?.approx ?? false,
+            hasData: Boolean(day),
+        });
+    }
+
+    const last = state.samples.length > 0 ? state.samples[state.samples.length - 1] : null;
+    return {
+        currency: state.primaryCurrency,
+        isAvailable: Boolean(isAvailable),
+        balances: last
+            ? [{currency: state.primaryCurrency, total: last.total, granted: last.granted, toppedUp: last.toppedUp}]
+            : [],
+        today: {
+            spend: today?.spend ?? 0,
+            approx: today?.approx ?? false,
+            coveredFrom: today?.coveredFrom ?? null,
+            hasData: Boolean(today),
+        },
+        week: sumWindow(7),
+        month: sumWindow(30),
+        chart,
+        updatedAt: state.lastSuccessAt,
+    };
+}

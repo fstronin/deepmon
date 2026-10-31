@@ -78,6 +78,38 @@ export const tests = [
         const pruned = H.prune(state, {now: at(2026, 11, 1, 10, 1), sampleRetentionDays: 7, dayRetentionDays: 400});
         t.eq(pruned.days['2025-01-01'], undefined);
     }},
+    {name: 'summarize: пустая история', fn: t => {
+        const s = H.summarize(H.empty(), at(2026, 11, 1, 12, 0), {chartDays: 14});
+        t.eq(s.today.hasData, false);
+        t.eq(s.today.spend, 0);
+        t.eq(s.chart.length, 14);
+        t.eq(s.chart[13].date, '2026-11-01');
+        t.eq(s.chart.every(p => p.hasData === false), true);
+        t.eq(s.currency, null);
+        t.eq(s.updatedAt, null);
+    }},
+    {name: 'summarize: сегодня, 7 и 30 дней', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 0, 1), 1000), {intervalMinutes: 15});
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 0, 16), 940), {intervalMinutes: 15}));
+        const s = H.summarize(state, at(2026, 11, 1, 12, 0), {chartDays: 14, isAvailable: true});
+        t.eq(s.today.spend, 60);
+        t.eq(s.week.spend, 60);
+        t.eq(s.month.spend, 60);
+        t.eq(s.isAvailable, true);
+        t.eq(s.week.daysWithData, 1);
+        t.eq(s.today.hasData, true);
+        t.eq(s.chart[13].spend, 60);
+        t.eq(s.chart[13].approx, false);
+        t.eq(s.balances.length, 1);
+        t.eq(s.balances[0].total, 940);
+    }},
+    {name: 'summarize: approx доходит до графика и today', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 9, 0), 1000), {intervalMinutes: 15});
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 9, 30), 970), {intervalMinutes: 15}));
+        const s = H.summarize(state, at(2026, 11, 1, 12, 0), {chartDays: 14});
+        t.eq(s.today.approx, true);
+        t.eq(s.chart[13].approx, true);
+    }},
 ];
 
 function sample(t, total) {

@@ -1,0 +1,44 @@
+.TH DEEPMON-KEY 1 "2026-11-01" "deepmon 1.0.0" "Пользовательские команды"
+.SH NAME
+deepmon-key \- управление ключом DeepSeek API в связке ключей GNOME
+.SH SYNOPSIS
+.B deepmon-key
+.I команда
+.RB [ \-\-stdin ]
+.SH DESCRIPTION
+Хранит ключ DeepSeek API в GNOME Keyring (атрибуты application=deepmon,
+account=deepseek-api). Расширение deepmon читает его оттуда; резервный источник —
+файл ~/.config/deepmon/key с правами 0600.
+.PP
+Ключ читается со стандартного ввода без эха и не передаётся аргументом командной
+строки, поэтому не попадает в историю оболочки и в список процессов.
+.SH COMMANDS
+.TP
+.B set [--stdin]
+Сохранить ключ в связке. В терминале ввод скрыт; при перенаправлении ввода
+обязателен флаг \fB--stdin\fR.
+.TP
+.B status
+Показать источник ключа (keyring или file) и отпечаток sha256.
+.TP
+.B fingerprint
+Напечатать только отпечаток ключа.
+.TP
+.B delete
+Удалить ключ из связки. Файл ~/.config/deepmon/key не изменяется.
+.SH EXIT STATUS
+.TP
+.B 0
+Успех.
+.TP
+.B 2
+Неверные аргументы или формат ключа.
+.TP
+.B 3
+Ошибка связки ключей.
+.SH EXAMPLE
+.nf
+  deepmon-key set
+  deepmon-key status
+  pass show deepseek | deepmon-key set --stdin
+.fi

@@ -1,0 +1,170 @@
+#!/usr/bin/gjs -m
+// deepmon-key — управление ключом DeepSeek в связке ключей.
+// Ключ читается из stdin (без эха в TTY), никогда не попадает в argv и в вывод.
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import Secret from 'gi://Secret';
+import system from 'system';
+
+const KEY_RE = /^sk-[A-Za-z0-9_-]{16,}$/;
+const LABEL = 'DeepSeek API key';
+const ATTRIBUTES = {application: 'deepmon', account: 'deepseek-api'};
+const USAGE = `deepmon-key — ключ DeepSeek API
+
+  set [--stdin]   сохранить ключ в связке (TTY: ввод без эха; --stdin: из пайпа)
+  status          показать источник и отпечаток ключа
+  fingerprint     только отпечаток
+  delete          удалить ключ из связки
+  --help          эта справка
+
+Коды возврата: 0 — успех, 2 — неверные аргументы или формат ключа, 3 — ошибка связки.`;
+
+function schema() {
+    return Secret.Schema.new('org.freedesktop.Secret.Generic', Secret.SchemaFlags.NONE, {
+        application: Secret.SchemaAttributeType.STRING,
+        account: Secret.SchemaAttributeType.STRING,
+    });
+}
+
+function die(message, code) {
+    printerr(message);
+    system.exit(code);
+}
+
+function extensionDir() {
+    const candidates = [
+        GLib.build_filenamev([GLib.get_user_data_dir(), 'gnome-shell', 'extensions', 'deepmon@fstronin']),
+        '/usr/share/gnome-shell/extensions/deepmon@fstronin',
+    ];
+    const script = Gio.File.new_for_uri(import.meta.url).get_path();
+    candidates.push(GLib.build_filenamev([GLib.path_get_dirname(GLib.path_get_dirname(script)), 'src', 'deepmon@fstronin']));
+    for (const candidate of candidates) {
+        if (Gio.File.new_for_path(GLib.build_filenamev([candidate, 'storage', 'KeyReader.js'])).query_exists(null))
+            return candidate;
+    }
+    die('не найден каталог расширения deepmon', 3);
+}
+
+async function storage() {
+    const dir = extensionDir();
+    const load = name => import(Gio.File.new_for_path(GLib.build_filenamev([dir, 'storage', name])).get_uri());
+    const keyReaderModule = await load('KeyReader.js');
+    const fileModule = await load('FileKeyReader.js');
+    const keyringModule = await load('KeyringKeyReader.js');
+    return {fingerprint: keyReaderModule.fingerprint, KeyReader: keyReaderModule.KeyReader,
+        FileKeyReader: fileModule.FileKeyReader, KeyringKeyReader: keyringModule.KeyringKeyReader};
+}
+
+function stdinIsTty() {
+    const [, , , status] = GLib.spawn_command_line_sync('test -t 0');
+    return status === 0;
+}
+
+function readAll() {
+    const [, bytes] = GLib.file_get_contents('/dev/stdin');
+    return new TextDecoder().decode(bytes);
+}
+
+function readLineWithEchoOff(prompt) {
+    const channel = GLib.IOChannel.unix_new(0);
+    printerr(prompt);
+    GLib.spawn_command_line_sync('stty -echo');
+    try {
+        const [status, line] = channel.read_line();
+        return status === GLib.IOStatus.NORMAL ? line : '';
+    } finally {
+        GLib.spawn_command_line_sync('stty echo');
+    }
+}
+
+function normalize(text) {
+    let value = text.trim();
+    if (value.startsWith('Bearer '))
+        value = value.slice('Bearer '.length).trim();
+    if (value.length >= 2 && ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))))
+        value = value.slice(1, -1).trim();
+    return value;
+}
+
+async function resolveKey() {
+    const {KeyReader, FileKeyReader, KeyringKeyReader} = await storage();
+    return new KeyReader({
+        keyring: new KeyringKeyReader(),
+        file: new FileKeyReader({path: GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', 'key'])}),
+    }).readKey();
+}
+
+async function commandSet(args) {
+    const useStdin = args.includes('--stdin');
+    if (!useStdin && !stdinIsTty())
+        die('ключ не передан: используйте --stdin при перенаправлении ввода', 2);
+
+    const raw = useStdin ? readAll() : readLineWithEchoOff('Вставьте ключ DeepSeek (ввод скрыт): ');
+    const key = normalize(raw);
+    if (!KEY_RE.test(key))
+        die('неверный формат ключа: ожидается sk-… длиной от 16 символов', 2);
+
+    let stored;
+    try {
+        stored = Secret.password_store_sync(schema(), ATTRIBUTES, Secret.COLLECTION_DEFAULT, LABEL, key, null);
+    } catch (error) {
+        die(`не удалось сохранить в связке: ${error.message}`, 3);
+    }
+    if (!stored)
+        die('не удалось сохранить в связке ключей', 3);
+
+    const {fingerprint} = await storage();
+    print(`сохранён sk-…${key.slice(-4)} · sha256 ${fingerprint(key)}`);
+}
+
+async function commandStatus() {
+    const result = await resolveKey();
+    if (!result.ok) {
+        print(`ключа нет (${result.code})`);
+        return;
+    }
+    const {fingerprint} = await storage();
+    print(`${result.source}: sk-…${result.key.slice(-4)} · sha256 ${fingerprint(result.key)}`);
+}
+
+async function commandFingerprint() {
+    const result = await resolveKey();
+    if (!result.ok)
+        die(`ключа нет (${result.code})`, 3);
+    const {fingerprint} = await storage();
+    print(fingerprint(result.key));
+}
+
+function commandDelete() {
+    try {
+        Secret.password_clear_sync(schema(), ATTRIBUTES, null);
+    } catch (error) {
+        die(`не удалось удалить из связки: ${error.message}`, 3);
+    }
+    print('ключ удалён из связки; файл ~/.config/deepmon/key не тронут');
+}
+
+const [command, ...args] = ARGV;
+
+switch (command) {
+case 'set':
+    await commandSet(args);
+    break;
+case 'status':
+    await commandStatus();
+    break;
+case 'fingerprint':
+    await commandFingerprint();
+    break;
+case 'delete':
+    commandDelete();
+    break;
+case '--help':
+case '-h':
+case undefined:
+    print(USAGE);
+    break;
+default:
+    die(`неизвестная команда: ${command}\n\n${USAGE}`, 2);
+}

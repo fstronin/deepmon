@@ -42,7 +42,7 @@ dev-install: po
 dev-remove:
 	rm -rf "$(HOME)/.local/share/gnome-shell/extensions/deepmon@fstronin"
 
-deb: clean po
+deb: clean
 	@if command -v dh >/dev/null 2>&1; then \
 		dpkg-buildpackage -us -uc -b; \
 	else \

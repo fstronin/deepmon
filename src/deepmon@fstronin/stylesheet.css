@@ -37,6 +37,11 @@
     opacity: 0.8;
 }
 
+.deepmon-ratio {
+    font-size: 0.95em;
+    opacity: 0.85;
+}
+
 .deepmon-periods {
     padding: 2px 0;
     spacing: 16px;

@@ -72,9 +72,14 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
             ? S.popup.periodDays.replace('{days}', pluralDays(summary.month.daysWithData))
             : null,
         chart: summary?.chart ?? [],
-        limitLabel: summary && limitCents > 0
-            ? S.popup.limit.replace('{limit}', format(limitCents, summary.currency))
-            : S.popup.limit.replace('{limit}', '—'),
+        limitRatio: summary && limitCents > 0
+            ? {
+                text: S.popup.limitRatio
+                    .replace('{spent}', format(summary.today.spend, summary.currency))
+                    .replace('{limit}', formatAmount(limitCents)),
+                over: summary.today.spend > limitCents,
+            }
+            : null,
         statusText,
         errorText: errorText(error),
         noticeText: notice ?? '',

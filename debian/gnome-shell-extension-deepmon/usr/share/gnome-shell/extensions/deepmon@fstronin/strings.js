@@ -9,7 +9,7 @@ export const S = {
     popup: {
         title: 'DeepSeek API',
         refresh: 'Обновить сейчас',
-        limit: 'Порог: {limit}/день',
+        limitRatio: '{spent} / {limit}',
         open: 'platform.deepseek.com',
         settings: 'Настройки',
         today: 'Сегодня',

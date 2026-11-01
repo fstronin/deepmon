@@ -57,7 +57,10 @@ export const Indicator = GObject.registerClass({
         this._periodDaysLabel.visible = Boolean(view.periodDays);
 
         this._chart.setData(view.chart ?? []);
-        this._limitItem.label.text = view.limitLabel || S.popup.limit.replace('{limit}', '—');
+        const ratio = view.limitRatio;
+        this._ratioLabel.text = ratio ? (ratio.over ? `${ratio.text} ${S.panel.overLimit}` : ratio.text) : '';
+        this._ratioLabel.visible = Boolean(ratio);
+        this._ratioLabel.style_class = ratio?.over ? 'deepmon-ratio deepmon-over-limit' : 'deepmon-ratio';
     }
 
     destroy() {
@@ -88,6 +91,13 @@ export const Indicator = GObject.registerClass({
         else
             this._icon.visible = false;
         row.add_child(this._icon);
+        this._ratioLabel = new St.Label({
+            text: '',
+            style_class: 'deepmon-ratio',
+            x_align: Clutter.ActorAlign.END,
+            y_align: Clutter.ActorAlign.CENTER,
+            visible: false,
+        });
 
         const textBox = new St.BoxLayout({vertical: true, x_expand: true});
         this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
@@ -97,6 +107,7 @@ export const Indicator = GObject.registerClass({
         textBox.add_child(this._balanceLabel);
         textBox.add_child(this._statusLabel);
         row.add_child(textBox);
+        row.add_child(this._ratioLabel);
         header.add_child(row);
         this.menu.addMenuItem(header);
 
@@ -147,7 +158,6 @@ export const Indicator = GObject.registerClass({
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this._refreshItem = this._actionItem(S.popup.refresh, () => this._refresh());
-        this._limitItem = this._actionItem(S.popup.limit.replace('{limit}', '—'), () => this._openPrefs());
         this._openItem = this._actionItem(S.popup.open, () => this._onOpenPlatformCallback?.());
         this._settingsItem = this._actionItem(S.popup.settings, () => this._openPrefs());
     }

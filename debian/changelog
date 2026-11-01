@@ -1,3 +1,11 @@
+gnome-shell-extension-deepmon (1.0.6) unstable; urgency=medium
+
+  * Popup: the "Порог" menu item is gone; the header now shows the
+    spend-to-limit ratio (e.g. $3.96 / 7.00) on the right, highlighted
+    with a warning colour and a glyph when the limit is exceeded.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:00:00 +0000
+
 gnome-shell-extension-deepmon (1.0.5) unstable; urgency=medium
 
   * Period row: the minimum width moved from the value label to the cell,

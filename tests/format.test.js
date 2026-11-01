@@ -54,7 +54,15 @@ export const tests = [
         const view = buildViewModel({summary: summary(62), panelMode: 'both', limitCents: 100});
         t.eq(view.statusText, '');
         t.eq(view.captions, undefined);
-        t.eq(view.limitLabel, 'Порог: ¥1.00/день');
+        t.deepEq(view.limitRatio, {text: '¥0.62 / 1.00', over: false});
+    }},
+    {name: 'превышение порога помечается', fn: t => {
+        const view = buildViewModel({summary: summary(143), panelMode: 'both', limitCents: 100});
+        t.deepEq(view.limitRatio, {text: '¥1.43 / 1.00', over: true});
+    }},
+    {name: 'без порога отношения нет', fn: t => {
+        const view = buildViewModel({summary: summary(143), panelMode: 'both', limitCents: 0});
+        t.eq(view.limitRatio, null);
     }},
     {name: 'ошибка остаётся в статусной строке', fn: t => {
         const view = buildViewModel({summary: summary(62), error: {code: 'network'},

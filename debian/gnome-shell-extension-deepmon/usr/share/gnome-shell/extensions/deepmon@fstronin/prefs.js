@@ -1,11 +1,12 @@
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import Secret from 'gi://Secret';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-import {KeyringKeyReader, KEYRING_ATTRIBUTES, keyringSchema} from './storage/KeyringKeyReader.js';
-import {FileKeyReader} from './storage/FileKeyReader.js';
+import {KeyringKeyReader, KEYRING_ATTRIBUTES, PLATFORM_ATTRIBUTES, keyringSchema} from './storage/KeyringKeyReader.js';
+import {FileKeyReader, PLATFORM_TOKEN_PATTERN} from './storage/FileKeyReader.js';
 import {KeyReader, fingerprint} from './storage/KeyReader.js';
 import {Config} from './config/Config.js';
 
@@ -141,11 +142,61 @@ export default class DeepmonPreferences extends ExtensionPreferences {
             }
         });
 
+        const platformPath = GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', 'platform-token']);
+        const platformRow = new Adw.ActionRow({title: 'Токен платформы', subtitle: 'проверяю…'});
+        const platformSave = new Gtk.Button({label: 'Сохранить…', valign: Gtk.Align.CENTER});
+        const platformDelete = new Gtk.Button({label: 'Удалить', valign: Gtk.Align.CENTER});
+        platformRow.add_suffix(platformSave);
+        platformRow.add_suffix(platformDelete);
+        group.add(platformRow);
+
+        const refreshPlatformStatus = () => {
+            const reader = new KeyReader({
+                keyring: new KeyringKeyReader({attributes: PLATFORM_ATTRIBUTES}),
+                file: new FileKeyReader({path: platformPath, pattern: PLATFORM_TOKEN_PATTERN}),
+            });
+            reader.readKey().then(result => {
+                if (!result.ok) {
+                    platformRow.subtitle = 'не задан — история только по локальным опросам';
+                    return;
+                }
+                const source = result.source === 'keyring' ? 'keyring' : platformPath;
+                platformRow.subtitle = `${source}: sha256 ${fingerprint(result.key)}`;
+            });
+        };
+        refreshPlatformStatus();
+
+        platformSave.connect('clicked', () => this._askForKey(window, refreshPlatformStatus, {
+            title: 'Токен веб-сессии платформы',
+            entryTitle: 'userToken',
+            hint: 'Приватный эндпоинт даёт дневные расходы за прошлые дни. Токен — это доступ ко всему аккаунту.',
+            attributes: PLATFORM_ATTRIBUTES,
+            label: 'DeepSeek platform session token',
+            pattern: PLATFORM_TOKEN_PATTERN,
+            invalid: 'Неверный токен: ожидается строка от 16 символов.',
+        }));
+        platformDelete.connect('clicked', () => {
+            try {
+                Secret.password_clear_sync(keyringSchema(), PLATFORM_ATTRIBUTES, null);
+                refreshPlatformStatus();
+            } catch (error) {
+                platformRow.subtitle = `не удалось удалить: ${error.message}`;
+            }
+        });
+
         return group;
     }
 
-    _askForKey(window, onSaved) {
-        const dialog = new Adw.Dialog({title: 'Ключ DeepSeek API', content_width: 460});
+    _askForKey(window, onSaved, {
+        title = 'Ключ DeepSeek API',
+        entryTitle = 'sk-…',
+        hint: hintText = 'Вставьте ключ DeepSeek API, он сохранится в связке ключей GNOME.',
+        attributes = KEYRING_ATTRIBUTES,
+        label = 'DeepSeek API key',
+        pattern = KEY_RE,
+        invalid = 'Неверный формат: ожидается sk-… длиной от 16 символов.',
+    } = {}) {
+        const dialog = new Adw.Dialog({title, content_width: 460});
         const box = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,
             spacing: 12,
@@ -154,9 +205,8 @@ export default class DeepmonPreferences extends ExtensionPreferences {
             margin_start: 18,
             margin_end: 18,
         });
-        const entry = new Adw.PasswordEntryRow({title: 'sk-…'});
-        const hint = new Gtk.Label({label: 'Вставьте ключ DeepSeek API, он сохранится в связке ключей GNOME.',
-            wrap: true, xalign: 0});
+        const entry = new Adw.PasswordEntryRow({title: entryTitle});
+        const hint = new Gtk.Label({label: hintText, wrap: true, xalign: 0});
         const actions = new Gtk.Box({spacing: 8, halign: Gtk.Align.END});
         const cancel = new Gtk.Button({label: 'Отмена'});
         const save = new Gtk.Button({label: 'Сохранить', css_classes: ['suggested-action']});
@@ -171,13 +221,13 @@ export default class DeepmonPreferences extends ExtensionPreferences {
         cancel.connect('clicked', () => dialog.close());
         save.connect('clicked', () => {
             const key = entry.text.trim();
-            if (!KEY_RE.test(key)) {
-                hint.label = 'Неверный формат: ожидается sk-… длиной от 16 символов.';
+            if (!pattern.test(key)) {
+                hint.label = invalid;
                 return;
             }
             try {
-                Secret.password_store_sync(keyringSchema(), KEYRING_ATTRIBUTES,
-                    Secret.COLLECTION_DEFAULT, 'DeepSeek API key', key, null);
+                Secret.password_store_sync(keyringSchema(), attributes,
+                    Secret.COLLECTION_DEFAULT, label, key, null);
                 dialog.close();
                 onSaved();
             } catch (error) {

@@ -10,8 +10,16 @@
     opacity: 0.55;
 }
 
+.deepmon-popup {
+    min-width: 320px;
+}
+
 .deepmon-header {
     padding-bottom: 6px;
+}
+
+.deepmon-header-row {
+    spacing: 10px;
 }
 
 .deepmon-balance {
@@ -30,17 +38,24 @@
 }
 
 .deepmon-periods {
-    padding: 4px 0;
+    padding: 2px 0;
+    spacing: 16px;
+}
+
+.deepmon-period-cell {
+    spacing: 2px;
 }
 
 .deepmon-period-value {
+    font-size: 1.1em;
     font-weight: bold;
+    min-width: 72px;
 }
 
 .deepmon-chart {
     height: 48px;
     spacing: 3px;
-    padding-top: 4px;
+    margin-top: 6px;
 }
 
 .deepmon-bar {
@@ -58,7 +73,7 @@
 }
 
 .deepmon-chart-labels {
-    padding-top: 2px;
+    margin-top: 2px;
 }
 
 .deepmon-chart-date {

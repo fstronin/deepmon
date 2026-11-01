@@ -141,6 +141,44 @@ export const tests = [
         t.eq(H.deserialize('{oops').code, 'corrupt');
         t.eq(H.deserialize('{"version":99,"samples":[]}').code, 'corrupt');
     }},
+    {name: 'importCosts: заполняет дни без локальных данных', fn: t => {
+        const now = at(2026, 11, 1, 10, 0);
+        const state = H.importCosts(H.empty(), {
+            currency: 'CNY',
+            days: [{date: '2026-10-30', cents: 44}, {date: '2026-10-31', cents: 125}],
+            now,
+        });
+        t.eq(state.imported['2026-10-30'], 44);
+        t.eq(state.imported['2026-10-31'], 125);
+        t.eq(state.importedCurrency, 'CNY');
+        t.eq(state.importedAt, now);
+    }},
+    {name: 'importCosts: данные платформы главнее локальной дельты', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 0, 1), 1000), {intervalMinutes: 15});
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 0, 16), 950), {intervalMinutes: 15}));
+        state = H.importCosts(state, {
+            currency: 'CNY',
+            days: [{date: '2026-11-01', cents: 999}, {date: '2026-10-31', cents: 70}],
+            now: at(2026, 11, 1, 10, 0),
+        });
+        const summary = H.summarize(state, at(2026, 11, 1, 12, 0), {chartDays: 14});
+        t.eq(summary.today.spend, 999);
+        t.eq(summary.today.approx, false);
+        t.eq(summary.chart[12].spend, 70);
+        t.eq(summary.chart[12].hasData, true);
+        t.eq(summary.month.spend, 1069);
+    }},
+    {name: 'importCosts выживает rebuild и убирается prune', fn: t => {
+        const state = H.importCosts(H.empty(), {
+            currency: 'CNY',
+            days: [{date: '2026-09-15', cents: 300}],
+            now: at(2026, 11, 1, 10, 0),
+        });
+        const rebuilt = H.rebuild(state, {now: at(2026, 11, 1, 10, 0), intervalMinutes: 15});
+        t.eq(rebuilt.imported['2026-09-15'], 300);
+        const pruned = H.prune(rebuilt, {now: at(2026, 11, 1, 10, 0), sampleRetentionDays: 7, dayRetentionDays: 30});
+        t.eq(pruned.imported['2026-09-15'], undefined);
+    }},
 ];
 
 function sample(t, total) {

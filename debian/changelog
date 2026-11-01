@@ -1,3 +1,16 @@
+gnome-shell-extension-deepmon (1.0.1) unstable; urgency=medium
+
+  * Popup redesign: whale logo in the header, 320 px minimum width,
+    period values without the glued day suffix, single caption line for
+    other currencies and top-ups, separate "данных: N из 30" line.
+  * Optional platform session token: daily costs from the private
+    usage endpoint now fill past days and take precedence over the
+    locally measured balance deltas.
+  * deepmon-key: --platform for the session token, status shows both
+    secrets, stty gets the terminal device explicitly (echo off works).
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:10:00 +0000
+
 gnome-shell-extension-deepmon (1.0.0) unstable; urgency=medium
 
   * Initial release: balance indicator, spending history, daily limit

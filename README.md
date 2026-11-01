@@ -61,6 +61,23 @@ deepmon-key delete       # убрать из связки (файл не тро�
 pass show deepseek | deepmon-key set --stdin
 ```
 
+### История за прошлые дни (необязательно)
+
+Ключ API отдаёт только баланс, поэтому история по дням строится из локальных опросов.
+Приватный эндпоинт платформы даёт дневные стоимости, но требует токен веб-сессии:
+
+```sh
+deepmon-key set --platform     # вставить userToken из platform.deepseek.com
+deepmon-key delete --platform
+```
+
+Где взять: platform.deepseek.com → DevTools → Application → Local Storage →
+`userToken`. Токен равен доступу ко всему аккаунту и хранится в связке ключей;
+запросы идут на `GET /api/v0/usage/by_api_key/cost` (непубличный, может измениться).
+Когда токен задан, дневные суммы платформы **главнее** локальной дельты баланса:
+именно поэтому цифра за сегодня совпадает с сайтом, даже если расширение
+запустилось в середине дня. Без токена остаётся локальная оценка с пометкой `≈`.
+
 Тот же ключ можно положить через настройки расширения (`Настройки` → «Ключ API»).
 Если `secret-tool` установлен, работает и он:
 `secret-tool store --label=DeepSeek application deepmon account deepseek-api`.
@@ -89,8 +106,8 @@ gsettings set org.gnome.shell.extensions.deepmon currency USD
 ## Проверка
 
 ```sh
-make test         # 92 теста домена, адаптеров и CLI (gjs, без шелла)
-make test-net     # 7 тестов HTTP-адаптера против локального mock-сервера
+make test         # 109 тестов домена, адаптеров и CLI (gjs, без шелла)
+make test-net     # 9 тестов HTTP-адаптеров против локального mock-сервера
 make verify-ui    # headless gnome-shell: состояние «нет ключа» и отсутствие утечек акторов
 make verify-e2e   # headless + mock API + ключ: полный цикл, история на диске
 make verify-system # headless в системной раскладке: без schemas/ внутри расширения
@@ -120,4 +137,5 @@ mock-сервер (`tests/mock_server.py`) и проверять все ветв
 
 ## Лицензия
 
-MIT.
+MIT. Логотип-кит в шапке popup — favicon с deepseek.com, используется как
+указание на сервис; права на него принадлежат DeepSeek.

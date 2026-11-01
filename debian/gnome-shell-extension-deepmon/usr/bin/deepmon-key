@@ -1,23 +1,43 @@
 #!/usr/bin/gjs -m
-// deepmon-key — управление ключом DeepSeek в связке ключей.
-// Ключ читается из stdin (без эха в TTY), никогда не попадает в argv и в вывод.
+// deepmon-key — управление ключом DeepSeek API и токеном веб-сессии платформы.
+// Секрет читается из stdin (без эха в TTY), никогда не попадает в argv и в вывод.
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Secret from 'gi://Secret';
 import system from 'system';
 
 const KEY_RE = /^sk-[A-Za-z0-9_-]{16,}$/;
-const LABEL = 'DeepSeek API key';
-const ATTRIBUTES = {application: 'deepmon', account: 'deepseek-api'};
-const USAGE = `deepmon-key — ключ DeepSeek API
+const TOKEN_RE = /^[A-Za-z0-9._-]{16,}$/;
+const KEY_TARGET = {
+    attributes: {application: 'deepmon', account: 'deepseek-api'},
+    label: 'DeepSeek API key',
+    fileName: 'key',
+    pattern: KEY_RE,
+    prompt: 'Вставьте ключ DeepSeek (ввод скрыт): ',
+    printed: value => `sk-…${value.slice(-4)}`,
+};
+const PLATFORM_TARGET = {
+    attributes: {application: 'deepmon', account: 'deepseek-platform'},
+    label: 'DeepSeek platform session token',
+    fileName: 'platform-token',
+    pattern: TOKEN_RE,
+    prompt: 'Вставьте токен веб-сессии platform.deepseek.com (ввод скрыт): ',
+    printed: value => `…${value.slice(-6)}`,
+};
+const USAGE = `deepmon-key — ключ DeepSeek API и токен платформы
 
-  set [--stdin]   сохранить ключ в связке (TTY: ввод без эха; --stdin: из пайпа)
-  status          показать источник и отпечаток ключа
-  fingerprint     только отпечаток
-  delete          удалить ключ из связки
-  --help          эта справка
+  set [--platform] [--stdin]   сохранить секрет в связке
+                               (TTY: ввод без эха; --stdin: из пайпа)
+  status                       источники и отпечатки обоих секретов
+  fingerprint [--platform]     только отпечаток
+  delete [--platform]          удалить секрет из связки
+  --help                       эта справка
 
-Коды возврата: 0 — успех, 2 — неверные аргументы или формат ключа, 3 — ошибка связки.`;
+Без --platform работаем с ключом API (он нужен для баланса).
+С --platform — с токеном веб-сессии: он позволяет подтянуть дневные расходы
+с platform.deepseek.com (приватный эндпоинт, не ключ API).
+
+Коды возврата: 0 — успех, 2 — неверные аргументы или формат, 3 — ошибка связки.`;
 
 function schema() {
     return Secret.Schema.new('org.freedesktop.Secret.Generic', Secret.SchemaFlags.NONE, {
@@ -51,8 +71,12 @@ async function storage() {
     const keyReaderModule = await load('KeyReader.js');
     const fileModule = await load('FileKeyReader.js');
     const keyringModule = await load('KeyringKeyReader.js');
-    return {fingerprint: keyReaderModule.fingerprint, KeyReader: keyReaderModule.KeyReader,
-        FileKeyReader: fileModule.FileKeyReader, KeyringKeyReader: keyringModule.KeyringKeyReader};
+    return {
+        fingerprint: keyReaderModule.fingerprint,
+        KeyReader: keyReaderModule.KeyReader,
+        FileKeyReader: fileModule.FileKeyReader,
+        KeyringKeyReader: keyringModule.KeyringKeyReader,
+    };
 }
 
 function stdinIsTty() {
@@ -80,7 +104,7 @@ function stdinTerminal() {
 
 // SubprocessLauncher отдаёт ребёнку stdin, а не терминал (ioctl на нём не работает),
 // поэтому устройство передаётся явно через -F. Возвращаем успех: без отключения эха
-// читать ключ нельзя.
+// читать секрет нельзя.
 function stty(args) {
     const device = stdinTerminal();
     if (!device)
@@ -123,27 +147,39 @@ function normalize(text) {
     return value;
 }
 
-async function resolveKey() {
+function targetFor(args) {
+    return args.includes('--platform') ? PLATFORM_TARGET : KEY_TARGET;
+}
+
+async function resolveSecret(target) {
     const {KeyReader, FileKeyReader, KeyringKeyReader} = await storage();
     return new KeyReader({
-        keyring: new KeyringKeyReader(),
-        file: new FileKeyReader({path: GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', 'key'])}),
+        keyring: new KeyringKeyReader({attributes: target.attributes}),
+        file: new FileKeyReader({
+            path: GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', target.fileName]),
+            pattern: target.pattern,
+        }),
+        keyringTimeoutMs: 4000,
     }).readKey();
 }
 
 async function commandSet(args) {
+    const target = targetFor(args);
     const useStdin = args.includes('--stdin');
     if (!useStdin && !stdinIsTty())
-        die('ключ не передан: используйте --stdin при перенаправлении ввода', 2);
+        die('секрет не передан: используйте --stdin при перенаправлении ввода', 2);
 
-    const raw = useStdin ? readAll() : readLineWithEchoOff('Вставьте ключ DeepSeek (ввод скрыт): ');
-    const key = normalize(raw);
-    if (!KEY_RE.test(key))
-        die('неверный формат ключа: ожидается sk-… длиной от 16 символов', 2);
+    const raw = useStdin ? readAll() : readLineWithEchoOff(target.prompt);
+    const value = normalize(raw);
+    if (!target.pattern.test(value))
+        die(target === PLATFORM_TARGET
+            ? 'неверный токен платформы: ожидается строка от 16 символов'
+            : 'неверный формат ключа: ожидается sk-… длиной от 16 символов', 2);
 
     let stored;
     try {
-        stored = Secret.password_store_sync(schema(), ATTRIBUTES, Secret.COLLECTION_DEFAULT, LABEL, key, null);
+        stored = Secret.password_store_sync(schema(), target.attributes, Secret.COLLECTION_DEFAULT,
+            target.label, value, null);
     } catch (error) {
         die(`не удалось сохранить в связке: ${error.message}`, 3);
     }
@@ -151,34 +187,43 @@ async function commandSet(args) {
         die('не удалось сохранить в связке ключей', 3);
 
     const {fingerprint} = await storage();
-    print(`сохранён sk-…${key.slice(-4)} · sha256 ${fingerprint(key)}`);
+    print(`сохранён ${target.printed(value)} · sha256 ${fingerprint(value)}`);
 }
 
 async function commandStatus() {
-    const result = await resolveKey();
-    if (!result.ok) {
-        print(`ключа нет (${result.code})`);
-        return;
-    }
     const {fingerprint} = await storage();
-    print(`${result.source}: sk-…${result.key.slice(-4)} · sha256 ${fingerprint(result.key)}`);
+    for (const target of [KEY_TARGET, PLATFORM_TARGET]) {
+        const name = target === PLATFORM_TARGET ? 'платформа' : 'ключ API';
+        const result = await resolveSecret(target);
+        if (!result.ok) {
+            print(`${name}: нет (${result.code})`);
+            continue;
+        }
+        const path = result.source === 'file'
+            ? GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', target.fileName])
+            : 'keyring';
+        print(`${name}: ${path}, ${target.printed(result.key)} · sha256 ${fingerprint(result.key)}`);
+    }
 }
 
-async function commandFingerprint() {
-    const result = await resolveKey();
+async function commandFingerprint(args) {
+    const target = targetFor(args);
+    const result = await resolveSecret(target);
     if (!result.ok)
-        die(`ключа нет (${result.code})`, 3);
+        die(`секрета нет (${result.code})`, 3);
     const {fingerprint} = await storage();
     print(fingerprint(result.key));
 }
 
-function commandDelete() {
+function commandDelete(args) {
+    const target = targetFor(args);
     try {
-        Secret.password_clear_sync(schema(), ATTRIBUTES, null);
+        Secret.password_clear_sync(schema(), target.attributes, null);
     } catch (error) {
         die(`не удалось удалить из связки: ${error.message}`, 3);
     }
-    print('ключ удалён из связки; файл ~/.config/deepmon/key не тронут');
+    const name = target === PLATFORM_TARGET ? 'токен платформы' : 'ключ';
+    print(`${name} удалён из связки; файл ~/.config/deepmon/${target.fileName} не тронут`);
 }
 
 const [command, ...args] = ARGV;
@@ -191,10 +236,10 @@ case 'status':
     await commandStatus();
     break;
 case 'fingerprint':
-    await commandFingerprint();
+    await commandFingerprint(args);
     break;
 case 'delete':
-    commandDelete();
+    commandDelete(args);
     break;
 case '--help':
 case '-h':

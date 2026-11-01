@@ -1,7 +1,8 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
-const KEY_RE = /^sk-[A-Za-z0-9_-]{16,}$/;
+export const KEY_PATTERN = /^sk-[A-Za-z0-9_-]{16,}$/;
+export const PLATFORM_TOKEN_PATTERN = /^[A-Za-z0-9._-]{16,}$/;
 
 function normalize(text) {
     let value = text.trim();
@@ -16,8 +17,9 @@ function normalize(text) {
 }
 
 export class FileKeyReader {
-    constructor({path}) {
+    constructor({path, pattern = KEY_PATTERN}) {
         this._path = path;
+        this._pattern = pattern;
     }
 
     async readKey() {
@@ -41,7 +43,7 @@ export class FileKeyReader {
         }
 
         const key = normalize(new TextDecoder().decode(contents));
-        if (!KEY_RE.test(key))
+        if (!this._pattern.test(key))
             return {ok: false, code: 'no-key', detail: `пустой или неверный ключ: ${this._path}`};
         return {ok: true, key, source: 'file'};
     }

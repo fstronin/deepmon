@@ -8,8 +8,9 @@ import {JsonSpendingStore} from './spending/JsonSpendingStore.js';
 import {RefreshSpending} from './spending/RefreshSpending.js';
 import {localDate} from './spending/History.js';
 import {KeyReader} from './storage/KeyReader.js';
-import {KeyringKeyReader} from './storage/KeyringKeyReader.js';
-import {FileKeyReader} from './storage/FileKeyReader.js';
+import {KeyringKeyReader, PLATFORM_ATTRIBUTES} from './storage/KeyringKeyReader.js';
+import {FileKeyReader, PLATFORM_TOKEN_PATTERN} from './storage/FileKeyReader.js';
+import {PlatformUsageSource} from './usage/PlatformUsageSource.js';
 import {dispatchAlert} from './alerting/AlertFlow.js';
 import {ShellNotifier} from './alerting/ShellNotifier.js';
 import {Indicator} from './panel/Indicator.js';
@@ -32,11 +33,15 @@ export default class DeepmonExtension extends Extension {
             keyring: new KeyringKeyReader(),
             file: new FileKeyReader({path: this._config.keyFilePath}),
         });
+        this._usageSource = new PlatformUsageSource({baseUrl: this._config.platformBaseUrl});
+        this._platformTokenReader = this._buildPlatformTokenReader();
         this._refreshUnit = new RefreshSpending({
             source: this._source,
             store: this._store,
             keyReader: this._keyReader,
             config: this._config,
+            usageSource: this._usageSource,
+            platformTokenReader: this._platformTokenReader,
         });
         this._notifier = new ShellNotifier();
         this._cancellable = new Gio.Cancellable();
@@ -50,6 +55,7 @@ export default class DeepmonExtension extends Extension {
             onRefresh: () => this._requestRefresh({force: true}),
             onOpenPrefs: () => this.openPreferences(),
             onOpenPlatform: () => Gio.AppInfo.launch_default_for_uri(PLATFORM_URL, null),
+            iconPath: this._iconPath(),
         });
         Main.panel.addToStatusArea(UUID, this._indicator);
 
@@ -82,6 +88,20 @@ export default class DeepmonExtension extends Extension {
         this._config = null;
         this._settings = null;
         this._merged = {summary: null, notice: null, error: null};
+    }
+
+    _buildPlatformTokenReader() {
+        return new KeyReader({
+            keyring: new KeyringKeyReader({attributes: PLATFORM_ATTRIBUTES}),
+            file: new FileKeyReader({
+                path: GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', 'platform-token']),
+                pattern: PLATFORM_TOKEN_PATTERN,
+            }),
+        });
+    }
+
+    _iconPath() {
+        return GLib.build_filenamev([this.path, 'icons', 'deepseek-whale.png']);
     }
 
     _requestRefresh({force = false} = {}) {
@@ -148,15 +168,19 @@ export default class DeepmonExtension extends Extension {
         if (minutes !== this._timerMinutes)
             this._armTimer(minutes);
         this._source = new SoupBalanceSource({baseUrl: this._config.apiBaseUrl});
+        this._usageSource = new PlatformUsageSource({baseUrl: this._config.platformBaseUrl});
         this._keyReader = new KeyReader({
             keyring: new KeyringKeyReader(),
             file: new FileKeyReader({path: this._config.keyFilePath}),
         });
+        this._platformTokenReader = this._buildPlatformTokenReader();
         this._refreshUnit = new RefreshSpending({
             source: this._source,
             store: this._store,
             keyReader: this._keyReader,
             config: this._config,
+            usageSource: this._usageSource,
+            platformTokenReader: this._platformTokenReader,
         });
         this._render(this._viewModel());
     }

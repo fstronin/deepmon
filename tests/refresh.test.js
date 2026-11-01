@@ -13,7 +13,7 @@ function fakeStore(state) {
     return {
         saved,
         archived,
-        load: () => ({ok: true, state}),
+        load: () => ({ok: true, state: saved.length > 0 ? saved[saved.length - 1] : state}),
         save: next => {
             saved.push(next);
             return {ok: true};
@@ -29,12 +29,14 @@ const okKeyReader = () => ({readKey: async () => ({ok: true, key: 'sk-aaaaaaaaaa
 const okSource = snapshot => ({request: async () => ({ok: true, snapshot})});
 const failSource = code => ({request: async () => ({ok: false, code})});
 
-function make({source, store, keyReader, currency, config} = {}) {
+function make({source, store, keyReader, currency, config, usageSource, platformTokenReader} = {}) {
     return new RefreshSpending({
         source,
         store,
         keyReader: keyReader ?? okKeyReader(),
         config: config ?? {currency: currency ?? '', chartDays: 14},
+        usageSource: usageSource ?? null,
+        platformTokenReader: platformTokenReader ?? null,
         now: () => t0,
     });
 }
@@ -117,5 +119,33 @@ export const tests = [
         const r = await make({source: okSource(snap(11840)), store}).run();
         t.ok(r.summary, 'сводка есть');
         t.eq(r.warning, 'повреждённый файл сохранён');
+    }},
+    {name: 'импорт истории с платформы идёт раз в час', fn: async t => {
+        let calls = 0;
+        const usageSource = {requestCosts: async () => {
+            calls++;
+            return {ok: true, currency: 'CNY', days: [{date: '2026-10-30', cents: 44}]};
+        }};
+        const platformTokenReader = {readKey: async () => ({ok: true, key: 'platform-token', source: 'keyring'})};
+        const store = fakeStore(H.empty());
+        const unit = make({source: okSource(snap(11840)), store, usageSource, platformTokenReader});
+        const r = await unit.run();
+        t.eq(r.error, null);
+        const last = store.saved[store.saved.length - 1];
+        t.eq(last.imported['2026-10-30'], 44);
+        t.eq(typeof last.importedAt, 'number');
+        await unit.run();
+        t.eq(calls, 1);
+    }},
+    {name: 'без токена платформы импорта нет', fn: async t => {
+        let calls = 0;
+        const usageSource = {requestCosts: async () => {
+            calls++;
+            return {ok: true, currency: 'CNY', days: []};
+        }};
+        const platformTokenReader = {readKey: async () => ({ok: false, code: 'no-key'})};
+        const store = fakeStore(H.empty());
+        await make({source: okSource(snap(11840)), store, usageSource, platformTokenReader}).run();
+        t.eq(calls, 0);
     }},
 ];

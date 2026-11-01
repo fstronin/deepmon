@@ -30,6 +30,10 @@ export class Config {
         return this._settings.get_string('api-base-url');
     }
 
+    get platformBaseUrl() {
+        return this._settings.get_string('platform-base-url');
+    }
+
     get currency() {
         return this._settings.get_string('currency').trim();
     }

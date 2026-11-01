@@ -119,6 +119,7 @@ checks = {
 }
 if expected_bars:
     checks['barCount'] = report.get('barCount') == int(expected_bars)
+checks['icon'] = report.get('iconVisible') is True and report.get('iconHasGicon') is True
 if history:
     try:
         state = json.load(open(history))

@@ -50,17 +50,30 @@ export const tests = [
         t.deepEq(barHeights(points), [44, 22, 3, 2]);
     }},
     {name: 'barHeights: все нули не делит на ноль', fn: t => t.deepEq(barHeights([{spend: 0, hasData: true}]), [2])},
-    {name: 'extras с кодом валюты и подпись порога', fn: t => {
+    {name: 'captions: другие валюты и пополнение одной строкой', fn: t => {
         const data = summary(62);
-        data.balances.push({currency: 'USD', total: 725, granted: 0, toppedUp: 725});
+        data.balances = [
+            {currency: 'CNY', total: 11840, granted: 1000, toppedUp: 10840},
+            {currency: 'USD', total: 725, granted: 0, toppedUp: 725},
+        ];
         const view = buildViewModel({summary: data, panelMode: 'both', limitCents: 100});
-        t.deepEq(view.extras, ['USD 7.25']);
+        t.deepEq(view.captions, ['USD 7.25', 'грант ¥10.00', 'пополнено ¥108.40']);
         t.eq(view.limitLabel, 'Порог: ¥1.00/день');
     }},
-    {name: 'granted и toppedUp показываются только ненулевыми', fn: t => {
-        const data = summary(62);
-        data.balances = [{currency: 'CNY', total: 11840, granted: 1000, toppedUp: 10840}];
-        const view = buildViewModel({summary: data, panelMode: 'both', limitCents: 100});
-        t.deepEq(view.funding, ['грант ¥10.00', 'пополнено ¥108.40']);
+    {name: 'периоды без хвоста дней', fn: t => {
+        const view = buildViewModel({summary: summary(62), panelMode: 'both'});
+        t.eq(view.periods.week, '4.10');
+        t.eq(view.periods.month, '17.85');
+    }},
+    {name: 'periodDays: склонение по числу дней', fn: t => {
+        const days = n => buildViewModel({
+            summary: {...summary(62), month: {spend: 100, daysWithData: n}},
+            panelMode: 'both',
+        }).periodDays;
+        t.eq(days(1), 'данных: 1 день из 30');
+        t.eq(days(3), 'данных: 3 дня из 30');
+        t.eq(days(12), 'данных: 12 дней из 30');
+        t.eq(days(22), 'данных: 22 дня из 30');
+        t.eq(days(30), null);
     }},
 ];

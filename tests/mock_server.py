@@ -28,6 +28,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._raw(500, json.dumps({'error': 'boom'}))
         if scenario == 'broken':
             return self._raw(200, '{oops')
+        if scenario in ('platform', 'platform401', 'platformbroken'):
+            if scenario == 'platform401':
+                return self._raw(401, json.dumps({'code': 40003, 'msg': 'login required'}))
+            if scenario == 'platformbroken':
+                return self._raw(200, '{oops')
+            return self._raw(200, (FIXTURES / 'platform-cost.json').read_text())
 
         name = 'balance-multi.json' if scenario == 'multi' else 'balance-cny.json'
         return self._raw(200, (FIXTURES / name).read_text())

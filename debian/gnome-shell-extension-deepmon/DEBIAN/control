@@ -1,8 +1,8 @@
 Package: gnome-shell-extension-deepmon
-Version: 1.0.0
+Version: 1.0.1
 Architecture: all
 Maintainer: fstronin <fstronin@localhost>
-Installed-Size: 112
+Installed-Size: 137
 Depends: gnome-shell (>= 50), gjs, gir1.2-secret-1
 Recommends: gnome-keyring
 Section: gnome

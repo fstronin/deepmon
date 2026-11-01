@@ -25,6 +25,10 @@ export const tests = [
         const result = shell(`printf 'sk-abcdefghijklmnop1234' | '${cli}' set`);
         t.eq(result.stderr.includes('используйте --stdin'), true);
     }},
+    {name: 'токен платформы: мусор отвергается', fn: t => {
+        const result = shell(`printf 'garbage' | '${cli}' set --platform --stdin`);
+        t.eq(result.stderr.includes('неверный токен'), true);
+    }},
     {name: 'ввод ключа не отражается в терминале', fn: t => {
         // Ввод подаётся с задержкой: иначе он оказывается в pty до того, как CLI
         // успевает отключить эхо, и тест мерил бы гонку харнесса, а не поведение.

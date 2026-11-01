@@ -21,10 +21,17 @@ function errorText(error) {
 
 function periodText(period, withApprox) {
     const prefix = withApprox && period.approx ? S.popup.approxPrefix : '';
-    const suffix = period.daysWithData !== undefined && period.daysWithData < 30 && period.windowDays
-        ? S.popup.daysSuffix.replace('{days}', String(period.daysWithData))
-        : '';
-    return `${prefix}${formatAmount(period.spend)}${suffix}`;
+    return `${prefix}${formatAmount(period.spend)}`;
+}
+
+function pluralDays(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11)
+        return `${count} день`;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14))
+        return `${count} дня`;
+    return `${count} дней`;
 }
 
 export function buildViewModel({summary, notice = null, error = null, panelMode = 'both', limitCents = 0}) {
@@ -59,18 +66,19 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
         periods: summary
             ? {
                 today: periodText(summary.today, true),
-                week: periodText({...summary.week, windowDays: 7}, false),
-                month: periodText({...summary.month, windowDays: 30}, false),
+                week: periodText(summary.week, false),
+                month: periodText(summary.month, false),
             }
             : {today: '—', week: '—', month: '—'},
+        periodDays: summary && summary.month.daysWithData < 30
+            ? S.popup.periodDays.replace('{days}', pluralDays(summary.month.daysWithData))
+            : null,
         chart: summary?.chart ?? [],
-        extras: summary
-            ? summary.balances
-                .filter(item => item.currency !== summary.currency)
-                .map(item => `${item.currency} ${formatAmount(item.total)}`)
-            : [],
-        funding: summary && balance
+        captions: summary && balance
             ? [
+                ...summary.balances
+                    .filter(item => item.currency !== summary.currency)
+                    .map(item => `${item.currency} ${formatAmount(item.total)}`),
                 balance.granted > 0
                     ? S.popup.granted.replace('{amount}', format(balance.granted, balance.currency))
                     : null,

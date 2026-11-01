@@ -2,6 +2,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup?version=3.0';
 import {SoupBalanceSource} from '../src/deepmon@fstronin/balance/SoupBalanceSource.js';
+import {PlatformUsageSource} from '../src/deepmon@fstronin/usage/PlatformUsageSource.js';
 
 const PORT = 18087;
 const testDir = GLib.path_get_dirname(Gio.File.new_for_uri(import.meta.url).get_path());
@@ -76,6 +77,20 @@ export const tests = [
     {name: 'net: таймаут -> network', fn: async t => {
         await ensureServer();
         t.eq((await src('slow').request({key: 'sk-test'})).code, 'network');
+    }},
+    {name: 'net: платформа отдаёт дневные стоимости', fn: async t => {
+        await ensureServer();
+        const source = new PlatformUsageSource({baseUrl: `http://127.0.0.1:${PORT}/platform`, timeoutSeconds: 2});
+        const r = await source.requestCosts({token: 'pt', start: 0, end: 2000000000, tz: 7200});
+        t.ok(r.ok, 'ok');
+        t.eq(r.currency, 'USD');
+        t.eq(r.days.length, 2);
+        t.eq(r.days[0].cents, 44);
+    }},
+    {name: 'net: платформа 401 -> platform-auth', fn: async t => {
+        await ensureServer();
+        const source = new PlatformUsageSource({baseUrl: `http://127.0.0.1:${PORT}/platform401`, timeoutSeconds: 2});
+        t.eq((await source.requestCosts({token: 'pt', start: 0, end: 2000000000, tz: 0})).code, 'platform-auth');
     }},
     {name: 'net: отмена -> cancelled', fn: async t => {
         await ensureServer();

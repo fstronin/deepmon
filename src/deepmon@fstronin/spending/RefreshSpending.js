@@ -6,13 +6,17 @@ import * as History from './History.js';
 const DEFAULT_INTERVAL_MINUTES = 15;
 
 export class RefreshSpending {
-    constructor({source, store, keyReader, config, now, intervalMinutes = null}) {
+    constructor({source, store, keyReader, config, now, intervalMinutes = null,
+        usageSource = null, platformTokenReader = null, importIntervalSeconds = 3600}) {
         this._source = source;
         this._store = store;
         this._keyReader = keyReader;
         this._config = config;
         this._now = now ?? (() => Math.floor(Date.now() / 1000));
         this._intervalMinutes = intervalMinutes;
+        this._usageSource = usageSource;
+        this._platformTokenReader = platformTokenReader;
+        this._importIntervalSeconds = importIntervalSeconds;
         this._inFlight = false;
         this._authFingerprint = null;
     }
@@ -72,7 +76,9 @@ export class RefreshSpending {
         if (!appended.ok)
             return this._result({error: {code: appended.code}});
 
-        const state = History.rebuild(appended.state, {now: this._now(), intervalMinutes: this._interval()});
+        let state = History.rebuild(appended.state, {now: this._now(), intervalMinutes: this._interval()});
+        const platform = await this._importPlatform(state);
+        state = platform.state;
         const saved = this._store.save(state);
         const summary = History.summarize(state, this._now(), {
             chartDays: this._config.chartDays,
@@ -81,9 +87,63 @@ export class RefreshSpending {
         summary.balances = response.snapshot.balances;
         this._authFingerprint = null;
 
+        const platformWarning = platform.error ? `история платформы: ${platform.error.code}` : null;
+        const messages = [warning, platformWarning].filter(Boolean);
+        const combinedWarning = messages.length > 0 ? messages.join('; ') : null;
+        const extra = platform.error ? {platformError: platform.error} : {};
         return saved.ok
-            ? {summary, notice: adopted.notice, warning, state, error: null}
-            : {summary, notice: adopted.notice, warning, state, error: {code: 'storage', detail: saved.detail}};
+            ? {summary, notice: adopted.notice, warning: combinedWarning, state, error: null, ...extra}
+            : {summary, notice: adopted.notice, warning: combinedWarning, state, error: {code: 'storage', detail: saved.detail}, ...extra};
+    }
+
+    // Необязательное обогащение: дневные стоимости с платформы (нужен токен веб-сессии).
+    // Любая проблема оставляет локальную историю как есть.
+    async _importPlatform(state) {
+        if (!this._usageSource || !this._platformTokenReader)
+            return {state, error: null};
+
+        let token;
+        try {
+            token = await this._platformTokenReader.readKey();
+        } catch (error) {
+            return {state, error: {code: 'platform-internal', detail: error.message}};
+        }
+        if (!token.ok)
+            return {state, error: null};
+
+        const now = this._now();
+        if (state.importedAt && now - state.importedAt < this._importIntervalSeconds)
+            return {state, error: null};
+
+        const chartDays = this._config.chartDays ?? 14;
+        const startDate = new Date(now * 1000);
+        startDate.setHours(0, 0, 0, 0);
+        startDate.setDate(startDate.getDate() - (chartDays - 1));
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + chartDays);
+
+        let costs;
+        try {
+            costs = await this._usageSource.requestCosts({
+                token: token.key,
+                start: Math.floor(startDate.getTime() / 1000),
+                end: Math.floor(endDate.getTime() / 1000),
+                tz: -new Date(now * 1000).getTimezoneOffset() * 60,
+                currency: state.primaryCurrency,
+            });
+        } catch (error) {
+            return {state, error: {code: 'platform-internal', detail: error.message}};
+        }
+
+        if (!costs.ok)
+            return {state, error: {code: costs.code, detail: costs.detail}};
+        if (costs.currency !== state.primaryCurrency)
+            return {state, error: {code: 'platform-currency', detail: `ответ в ${costs.currency}`}};
+
+        return {
+            state: History.importCosts(state, {currency: costs.currency, days: costs.days, now}),
+            error: null,
+        };
     }
 
     _interval() {

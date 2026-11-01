@@ -11,6 +11,9 @@ export function empty() {
         primaryCurrency: null,
         samples: [],
         days: {},
+        imported: {},
+        importedCurrency: null,
+        importedAt: null,
         alerts: {},
         lastSuccessAt: null,
     };
@@ -88,6 +91,27 @@ export function prune(state, {now, sampleRetentionDays = 7, dayRetentionDays = 4
         if (date < dayCutoff)
             delete next.days[date];
     }
+    next.imported ??= {};
+    for (const date of Object.keys(next.imported)) {
+        if (date < dayCutoff)
+            delete next.imported[date];
+    }
+    return next;
+}
+
+export function importCosts(state, {currency, days, now, dayRetentionDays = 400}) {
+    const next = clone(state);
+    next.imported ??= {};
+    for (const {date, cents} of days)
+        next.imported[date] = cents;
+    next.importedCurrency = currency;
+    next.importedAt = now;
+
+    const cutoff = localDate(now - dayRetentionDays * 86400);
+    for (const date of Object.keys(next.imported)) {
+        if (date < cutoff)
+            delete next.imported[date];
+    }
     return next;
 }
 
@@ -139,31 +163,35 @@ function shiftDays(unixSeconds, deltaDays) {
 }
 
 export function summarize(state, now, {chartDays, isAvailable = false}) {
+    const dayView = date => {
+        const imported = state.imported?.[date];
+        if (imported !== undefined)
+            return {spend: imported, approx: false, hasData: true, coveredFrom: null};
+        const local = state.days[date];
+        if (local)
+            return {spend: local.spend, approx: local.approx, hasData: true, coveredFrom: local.coveredFrom};
+        return {spend: 0, approx: false, hasData: false, coveredFrom: null};
+    };
+
     const sumWindow = size => {
         let spend = 0;
         let daysWithData = 0;
         for (let back = 0; back < size; back++) {
-            const day = state.days[shiftDays(now, -back)];
-            if (!day)
+            const view = dayView(shiftDays(now, -back));
+            if (!view.hasData)
                 continue;
-            spend += day.spend;
+            spend += view.spend;
             daysWithData += 1;
         }
         return {spend, daysWithData};
     };
 
-    const todayDate = shiftDays(now, 0);
-    const today = state.days[todayDate];
+    const today = dayView(shiftDays(now, 0));
     const chart = [];
     for (let back = chartDays - 1; back >= 0; back--) {
         const date = shiftDays(now, -back);
-        const day = state.days[date];
-        chart.push({
-            date,
-            spend: day?.spend ?? 0,
-            approx: day?.approx ?? false,
-            hasData: Boolean(day),
-        });
+        const view = dayView(date);
+        chart.push({date, spend: view.spend, approx: view.approx, hasData: view.hasData});
     }
 
     const last = state.samples.length > 0 ? state.samples[state.samples.length - 1] : null;
@@ -174,10 +202,10 @@ export function summarize(state, now, {chartDays, isAvailable = false}) {
             ? [{currency: state.primaryCurrency, total: last.total, granted: last.granted, toppedUp: last.toppedUp}]
             : [],
         today: {
-            spend: today?.spend ?? 0,
-            approx: today?.approx ?? false,
-            coveredFrom: today?.coveredFrom ?? null,
-            hasData: Boolean(today),
+            spend: today.spend,
+            approx: today.approx,
+            coveredFrom: today.coveredFrom,
+            hasData: today.hasData,
         },
         week: sumWindow(7),
         month: sumWindow(30),
@@ -223,5 +251,13 @@ export function deserialize(text) {
     if (parsed.primaryCurrency !== null && typeof parsed.primaryCurrency !== 'string')
         return {ok: false, code: 'corrupt', detail: 'primaryCurrency не строка'};
 
-    return {ok: true, state: parsed};
+    return {
+        ok: true,
+        state: {
+            ...parsed,
+            imported: parsed.imported ?? {},
+            importedCurrency: parsed.importedCurrency ?? null,
+            importedAt: parsed.importedAt ?? null,
+        },
+    };
 }

@@ -1,0 +1,25 @@
+{
+  "code": 0,
+  "msg": "",
+  "data": {
+    "biz_code": 0,
+    "biz_msg": "",
+    "biz_data": {
+      "data": [
+        {
+          "currency": "USD",
+          "series": [
+            {
+              "apiKey": {"id": 42},
+              "model": "deepseek-chat",
+              "buckets": [
+                {"time": 1793404800, "cost": {"value": "0.4400"}},
+                {"time": 1793491200, "cost": {"value": "1.2500"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

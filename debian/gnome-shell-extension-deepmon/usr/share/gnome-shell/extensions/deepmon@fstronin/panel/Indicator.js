@@ -1,4 +1,5 @@
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -10,7 +11,7 @@ import {panelLabel} from './format.js';
 export const Indicator = GObject.registerClass({
     GTypeName: 'DeepmonIndicator',
 }, class Indicator extends PanelMenu.Button {
-    _init({onRefresh, onOpenPrefs, onOpenPlatform}) {
+    _init({onRefresh, onOpenPrefs, onOpenPlatform, iconPath = null}) {
         super._init(0.0, 'DeepSeek Usage', false);
         this._onRefreshCallback = onRefresh;
         this._onOpenPrefsCallback = onOpenPrefs;
@@ -26,7 +27,8 @@ export const Indicator = GObject.registerClass({
         });
         this.add_child(this._label);
 
-        this._buildMenu();
+        this._buildMenu(iconPath);
+        this.menu.box.add_style_class_name('deepmon-popup');
         this._menuSignal = this.menu.connect('open-state-changed', (menu, open) => {
             if (open)
                 this._refresh();
@@ -42,10 +44,8 @@ export const Indicator = GObject.registerClass({
             : 'deepmon-panel-label';
 
         this._balanceLabel.text = view.balanceText || '—';
-        this._extraLabel.text = (view.extras ?? []).join(' · ');
-        this._extraLabel.visible = (view.extras ?? []).length > 0;
-        this._fundingLabel.text = (view.funding ?? []).join(' · ');
-        this._fundingLabel.visible = (view.funding ?? []).length > 0;
+        this._captionsLabel.text = (view.captions ?? []).join(' · ');
+        this._captionsLabel.visible = (view.captions ?? []).length > 0;
         this._statusLabel.text = view.statusText || '';
         this._statusLabel.visible = Boolean(view.statusText);
 
@@ -55,6 +55,8 @@ export const Indicator = GObject.registerClass({
         this._periodLabels.today.text = view.periods.today;
         this._periodLabels.week.text = view.periods.week;
         this._periodLabels.month.text = view.periods.month;
+        this._periodDaysLabel.text = view.periodDays ?? '';
+        this._periodDaysLabel.visible = Boolean(view.periodDays);
 
         this._chart.setData(view.chart ?? []);
         this._limitItem.label.text = view.limitLabel || S.popup.limit.replace('{limit}', '—');
@@ -70,24 +72,36 @@ export const Indicator = GObject.registerClass({
         this._view = null;
     }
 
-    _buildMenu() {
+    _buildMenu(iconPath) {
         const header = new PopupMenu.PopupBaseMenuItem({
             reactive: false,
             can_focus: false,
             style_class: 'deepmon-header',
         });
-        const headerBox = new St.BoxLayout({vertical: true, x_expand: true});
+        const row = new St.BoxLayout({style_class: 'deepmon-header-row'});
+
+        this._icon = new St.Icon({
+            icon_size: 22,
+            y_align: Clutter.ActorAlign.CENTER,
+            style_class: 'deepmon-icon',
+        });
+        if (iconPath)
+            this._icon.gicon = new Gio.FileIcon({file: Gio.File.new_for_path(iconPath)});
+        else
+            this._icon.visible = false;
+        row.add_child(this._icon);
+
+        const textBox = new St.BoxLayout({vertical: true, x_expand: true});
         this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
         this._balanceLabel = new St.Label({text: '—', style_class: 'deepmon-balance'});
-        this._extraLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
-        this._fundingLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
+        this._captionsLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
         this._statusLabel = new St.Label({text: '', style_class: 'deepmon-status', visible: false});
-        headerBox.add_child(this._titleLabel);
-        headerBox.add_child(this._balanceLabel);
-        headerBox.add_child(this._extraLabel);
-        headerBox.add_child(this._fundingLabel);
-        headerBox.add_child(this._statusLabel);
-        header.add_child(headerBox);
+        textBox.add_child(this._titleLabel);
+        textBox.add_child(this._balanceLabel);
+        textBox.add_child(this._captionsLabel);
+        textBox.add_child(this._statusLabel);
+        row.add_child(textBox);
+        header.add_child(row);
         this.menu.addMenuItem(header);
 
         this._errorItem = this._messageItem('deepmon-error');
@@ -98,8 +112,9 @@ export const Indicator = GObject.registerClass({
         const periods = new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false});
         const periodBox = new St.BoxLayout({x_expand: true, style_class: 'deepmon-periods'});
         this._periodLabels = {};
+        this._periodCells = [];
         for (const [key, caption] of [['today', S.popup.today], ['week', S.popup.week], ['month', S.popup.month]]) {
-            const cell = new St.BoxLayout({vertical: true, x_expand: true});
+            const cell = new St.BoxLayout({vertical: true, x_expand: true, style_class: 'deepmon-period-cell'});
             cell.add_child(new St.Label({
                 text: caption,
                 style_class: 'deepmon-caption',
@@ -112,10 +127,21 @@ export const Indicator = GObject.registerClass({
             });
             cell.add_child(value);
             periodBox.add_child(cell);
+            this._periodCells.push(cell);
             this._periodLabels[key] = value;
         }
         periods.add_child(periodBox);
         this.menu.addMenuItem(periods);
+
+        this._periodDaysLabel = new St.Label({
+            text: '',
+            style_class: 'deepmon-caption',
+            x_align: Clutter.ActorAlign.CENTER,
+            visible: false,
+        });
+        const daysItem = new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false});
+        daysItem.add_child(this._periodDaysLabel);
+        this.menu.addMenuItem(daysItem);
 
         this._chart = new DayChart();
         const chartItem = new PopupMenu.PopupBaseMenuItem({reactive: false, can_focus: false});

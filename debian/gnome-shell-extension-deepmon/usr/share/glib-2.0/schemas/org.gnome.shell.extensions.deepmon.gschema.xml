@@ -39,6 +39,10 @@
       <default>'https://api.deepseek.com'</default>
       <summary>База API DeepSeek</summary>
     </key>
+    <key name="platform-base-url" type="s">
+      <default>'https://platform.deepseek.com'</default>
+      <summary>База приватных эндпоинтов платформы (дневные расходы)</summary>
+    </key>
     <key name="key-file" type="s">
       <default>''</default>
       <summary>Путь к резервному файлу ключа; пусто — ~/.config/deepmon/key</summary>

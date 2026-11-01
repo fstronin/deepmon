@@ -21,6 +21,7 @@ export const S = {
         granted: 'грант {amount}',
         toppedUp: 'пополнено {amount}',
         daysSuffix: ' · {days} дн.',
+        periodDays: 'данных: {days} из 30',
         approxPrefix: '≈',
     },
     alert: {

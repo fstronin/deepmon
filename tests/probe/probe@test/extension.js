@@ -44,6 +44,17 @@ function finish(area) {
     write({uiGroupChildrenAfterDisable: Main.uiGroup.get_n_children(), done: true});
 }
 
+function measure(area) {
+    return {
+        menuIsOpen: Boolean(area.menu?.isOpen),
+        iconVisible: Boolean(area._icon?.visible),
+        iconHasGicon: Boolean(area._icon?.gicon),
+        captionsText: area._captionsLabel?.text ?? null,
+        periodDaysText: area._periodDaysLabel?.text ?? null,
+        periodValues: ['today', 'week', 'month'].map(key => area._periodLabels?.[key]?.text ?? null),
+    };
+}
+
 export default class ProbeExtension extends Extension {
     enable() {
         write({uiGroupChildrenBefore: Main.uiGroup.get_n_children()});
@@ -76,7 +87,13 @@ export default class ProbeExtension extends Extension {
     _waitForLabel(area, tries) {
         const text = area._label?.text ?? '';
         if (EXPECT === '' || text.includes(EXPECT) || tries >= MAX_TICKS) {
-            finish(area);
+            area.menu.open();
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, () => {
+                write(measure(area));
+                area.menu.close();
+                finish(area);
+                return GLib.SOURCE_REMOVE;
+            });
             return;
         }
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, TICK_MS, () => {

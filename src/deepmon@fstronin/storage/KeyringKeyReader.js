@@ -1,6 +1,7 @@
 import Secret from 'gi://Secret';
 
 export const KEYRING_ATTRIBUTES = {application: 'deepmon', account: 'deepseek-api'};
+export const PLATFORM_ATTRIBUTES = {application: 'deepmon', account: 'deepseek-platform'};
 
 let schema = null;
 
@@ -13,11 +14,15 @@ export function keyringSchema() {
 }
 
 export class KeyringKeyReader {
+    constructor({attributes = KEYRING_ATTRIBUTES} = {}) {
+        this._attributes = attributes;
+    }
+
     readKey() {
         return new Promise(resolve => {
             const fail = error => resolve({ok: false, code: 'keyring-locked', detail: error?.message ?? 'keyring'});
             try {
-                Secret.password_lookup(keyringSchema(), KEYRING_ATTRIBUTES, null, (source, result) => {
+                Secret.password_lookup(keyringSchema(), this._attributes, null, (source, result) => {
                     let value;
                     try {
                         value = Secret.password_lookup_finish(result);

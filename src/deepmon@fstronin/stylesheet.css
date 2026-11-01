@@ -38,8 +38,9 @@
 }
 
 .deepmon-ratio {
-    font-size: 0.95em;
-    opacity: 0.85;
+    font-size: 1.3em;
+    font-weight: bold;
+    opacity: 0.9;
 }
 
 .deepmon-periods {

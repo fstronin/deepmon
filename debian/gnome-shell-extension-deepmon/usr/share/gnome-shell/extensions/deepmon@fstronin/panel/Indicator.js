@@ -79,7 +79,7 @@ export const Indicator = GObject.registerClass({
             can_focus: false,
             style_class: 'deepmon-header',
         });
-        const row = new St.BoxLayout({style_class: 'deepmon-header-row'});
+        const row = new St.BoxLayout({style_class: 'deepmon-header-row', x_expand: true});
 
         this._icon = new St.Icon({
             icon_size: 22,

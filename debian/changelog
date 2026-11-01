@@ -1,3 +1,10 @@
+gnome-shell-extension-deepmon (1.0.7) unstable; urgency=medium
+
+  * Header: the spend/limit ratio is pressed to the right edge (the
+    header row now expands to the popup width) and drawn larger and bold.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:10:00 +0000
+
 gnome-shell-extension-deepmon (1.0.6) unstable; urgency=medium
 
   * Popup: the "Порог" menu item is gone; the header now shows the

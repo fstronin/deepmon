@@ -26,7 +26,13 @@ export GSETTINGS_BACKEND=keyfile
 mkdir -p "$HOME" "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
 
 cp -a "$ROOT/src/deepmon@fstronin" "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin"
-glib-compile-schemas "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin/schemas"
+if [ "$MODE" = "system" ]; then
+    # Системная установка: схемы лежат только в системном каталоге, каталога schemas/
+    # внутри расширения нет — ровно как в пакете.
+    rm -rf "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin/schemas"
+else
+    glib-compile-schemas "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin/schemas"
+fi
 
 SCHEMA_DIR="$WORK/schemas"
 mkdir -p "$SCHEMA_DIR"

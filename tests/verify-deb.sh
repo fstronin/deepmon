@@ -46,4 +46,22 @@ else
     echo "ok gschemas.compiled не поставляется"
 fi
 
+if [ -e "$WORK/usr/share/gnome-shell/extensions/deepmon@fstronin/schemas" ]; then
+    echo "FAIL каталог schemas попал в расширение: getSettings() ищет там gschemas.compiled и падает"
+    fail=1
+else
+    echo "ok schemas не попадает в каталог расширения"
+fi
+
+EXT_IN_PKG="$WORK/usr/share/gnome-shell/extensions/deepmon@fstronin"
+for entry in "$ROOT"/src/deepmon@fstronin/*; do
+    name=$(basename "$entry")
+    [ "$name" = "schemas" ] && continue
+    if [ ! -e "$EXT_IN_PKG/$name" ]; then
+        echo "FAIL в пакете нет $name"
+        fail=1
+    fi
+done
+echo "ok верхний уровень расширения на месте"
+
 exit "$fail"

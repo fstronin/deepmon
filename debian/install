@@ -1,4 +1,15 @@
-src/deepmon@fstronin usr/share/gnome-shell/extensions/
+src/deepmon@fstronin/metadata.json usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/extension.js usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/prefs.js usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/stylesheet.css usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/strings.js usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/alerting usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/balance usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/config usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/money usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/panel usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/spending usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/storage usr/share/gnome-shell/extensions/deepmon@fstronin/
 bin/deepmon-key usr/bin/
 man/deepmon-key.1 usr/share/man/man1/
 src/deepmon@fstronin/schemas/org.gnome.shell.extensions.deepmon.gschema.xml usr/share/glib-2.0/schemas/

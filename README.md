@@ -93,6 +93,7 @@ make test         # 92 теста домена, адаптеров и CLI (gjs, 
 make test-net     # 7 тестов HTTP-адаптера против локального mock-сервера
 make verify-ui    # headless gnome-shell: состояние «нет ключа» и отсутствие утечек акторов
 make verify-e2e   # headless + mock API + ключ: полный цикл, история на диске
+make verify-system # headless в системной раскладке: без schemas/ внутри расширения
 make deb          # сборка пакета (нужен debhelper)
 ```
 

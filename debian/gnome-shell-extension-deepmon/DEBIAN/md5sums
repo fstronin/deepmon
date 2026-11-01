@@ -19,7 +19,6 @@ dc59934b763800ef2c3409375bd8cd1f  usr/share/gnome-shell/extensions/deepmon@fstro
 d160418f5b5f9379ebf14127cf5e582c  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/format.js
 9975d697ee956a9c36de9e22e448ff90  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/viewState.js
 910778a4965e3f0dbba2f5f80151da90  usr/share/gnome-shell/extensions/deepmon@fstronin/prefs.js
-9ecfd40f2458c35384720efa86676e0f  usr/share/gnome-shell/extensions/deepmon@fstronin/schemas/org.gnome.shell.extensions.deepmon.gschema.xml
 90693572572380cf9963a0bfbe217c17  usr/share/gnome-shell/extensions/deepmon@fstronin/spending/History.js
 e023006ba59ef08bb676938c19cc55b7  usr/share/gnome-shell/extensions/deepmon@fstronin/spending/JsonSpendingStore.js
 9243ed05d67ff02b6124b99391f90627  usr/share/gnome-shell/extensions/deepmon@fstronin/spending/RefreshSpending.js

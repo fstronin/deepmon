@@ -1,0 +1,2 @@
+[org.gnome.Shell]
+enabled-extensions=['deepmon@fstronin']

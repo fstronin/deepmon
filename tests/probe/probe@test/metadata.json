@@ -1,0 +1,6 @@
+{
+  "uuid": "probe@test",
+  "name": "deepmon headless probe",
+  "description": "Drives deepmon@fstronin inside a headless shell and writes a JSON report.",
+  "shell-version": ["50"]
+}

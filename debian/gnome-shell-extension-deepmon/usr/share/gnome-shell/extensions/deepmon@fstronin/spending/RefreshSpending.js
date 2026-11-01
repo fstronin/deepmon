@@ -50,7 +50,7 @@ export class RefreshSpending {
             return this._result({error: {code: response.code, detail: response.detail}});
         }
 
-        const selection = selectBalance(response.snapshot.balances, this._config.currency);
+        const selection = selectBalance(response.snapshot.balances, this._config.currency, loaded.state.primaryCurrency);
         if (!selection.ok) {
             return this._result({
                 error: {code: selection.code, currency: this._config.currency, available: selection.available},

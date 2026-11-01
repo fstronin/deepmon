@@ -31,17 +31,24 @@ export function parseBalanceResponse(text) {
     return {ok: true, snapshot: {isAvailable: Boolean(payload.is_available), balances}};
 }
 
-export function selectBalance(balances, preferred) {
-    if (!preferred)
-        return {ok: true, selected: balances[0]};
+export function selectBalance(balances, preferred, current = null) {
+    const pick = currency => balances.find(balance => balance.currency === currency) ?? null;
 
-    const selected = balances.find(balance => balance.currency === preferred);
-    if (selected)
-        return {ok: true, selected};
+    if (preferred) {
+        const selected = pick(preferred);
+        if (selected)
+            return {ok: true, selected};
+        return {ok: false, code: 'currency-unavailable', available: balances.map(balance => balance.currency)};
+    }
 
-    return {
-        ok: false,
-        code: 'currency-unavailable',
-        available: balances.map(balance => balance.currency),
-    };
+    // Авто: держимся за валюту, которую уже ведём, иначе берём первую с деньгами,
+    // иначе первую в ответе. Иначе пополнение другой валюты уводило бы историю в архив.
+    if (current) {
+        const selected = pick(current);
+        if (selected)
+            return {ok: true, selected};
+    }
+
+    const funded = balances.find(balance => balance.total > 0);
+    return {ok: true, selected: funded ?? balances[0]};
 }

@@ -25,4 +25,12 @@ export const tests = [
         const result = shell(`printf 'sk-abcdefghijklmnop1234' | '${cli}' set`);
         t.eq(result.stderr.includes('используйте --stdin'), true);
     }},
+    {name: 'ввод ключа не отражается в терминале', fn: t => {
+        // Ввод подаётся с задержкой: иначе он оказывается в pty до того, как CLI
+        // успевает отключить эхо, и тест мерил бы гонку харнесса, а не поведение.
+        const result = shell(`sh -c 'sleep 0.5; echo garbage-secret' | script -qec '${cli} set' /dev/null`);
+        t.eq(result.stdout.includes('garbage-secret'), false);
+        t.eq(result.stdout.includes('Inappropriate ioctl'), false);
+        t.eq(result.stdout.includes('неверный формат'), true);
+    }},
 ];

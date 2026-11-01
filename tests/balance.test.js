@@ -35,6 +35,18 @@ export const tests = [
         const r = selectBalance([{currency: 'CNY', total: 1}, {currency: 'USD', total: 2}], '');
         t.eq(r.selected.currency, 'CNY');
     }},
+    {name: 'selectBalance: авто предпочитает валюту с деньгами', fn: t => {
+        const r = selectBalance([{currency: 'CNY', total: 0}, {currency: 'USD', total: 2142}], '');
+        t.eq(r.selected.currency, 'USD');
+    }},
+    {name: 'selectBalance: авто держится за уже ведомую валюту', fn: t => {
+        const r = selectBalance([{currency: 'CNY', total: 500}, {currency: 'USD', total: 2142}], '', 'USD');
+        t.eq(r.selected.currency, 'USD');
+    }},
+    {name: 'selectBalance: все нули -> первая', fn: t => {
+        const r = selectBalance([{currency: 'CNY', total: 0}, {currency: 'USD', total: 0}], '');
+        t.eq(r.selected.currency, 'CNY');
+    }},
     {name: 'selectBalance: заданная закреплена', fn: t => {
         const r = selectBalance([{currency: 'CNY', total: 1}, {currency: 'USD', total: 2}], 'USD');
         t.eq(r.selected.total, 2);

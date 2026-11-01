@@ -65,14 +65,33 @@ function stdinIsTty() {
     }
 }
 
-// stty должен видеть наш терминал: SubprocessLauncher с флагами NONE наследует stdio,
-// в отличие от spawn_command_line_sync, который подключает ребёнку /dev/null.
+function stdinTerminal() {
+    try {
+        const info = Gio.File.new_for_path('/proc/self/fd/0')
+            .query_info('standard::symlink-target', Gio.FileQueryInfoFlags.NONE, null);
+        const target = info.get_symlink_target();
+        if (!target)
+            return null;
+        return target.startsWith('/') ? target : `/dev/${target}`;
+    } catch (error) {
+        return null;
+    }
+}
+
+// SubprocessLauncher отдаёт ребёнку stdin, а не терминал (ioctl на нём не работает),
+// поэтому устройство передаётся явно через -F. Возвращаем успех: без отключения эха
+// читать ключ нельзя.
 function stty(args) {
+    const device = stdinTerminal();
+    if (!device)
+        return false;
     try {
         const launcher = new Gio.SubprocessLauncher({flags: Gio.SubprocessFlags.NONE});
-        launcher.spawnv(['stty', ...args]).wait_check(null);
+        launcher.spawnv(['stty', '-F', device, ...args]).wait_check(null);
+        return true;
     } catch (error) {
         printerr(`stty ${args.join(' ')}: ${error.message}`);
+        return false;
     }
 }
 
@@ -84,7 +103,8 @@ function readAll() {
 function readLineWithEchoOff(prompt) {
     const channel = GLib.IOChannel.unix_new(0);
     printerr(prompt);
-    stty(['-echo']);
+    if (!stty(['-echo']))
+        die('не удалось отключить эхо терминала; используйте --stdin', 3);
     try {
         const [status, line] = channel.read_line();
         return status === GLib.IOStatus.NORMAL ? line : '';

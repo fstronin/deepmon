@@ -56,6 +56,29 @@ function parsePo(text) {
     return entries;
 }
 
+// Разбор GNU .mo: без него тест зависел бы от установленных в системе локалей,
+// а gettext в C-локали игнорирует LANGUAGE.
+function parseMo(path) {
+    const [ok, bytes] = Gio.File.new_for_path(path).load_contents(null);
+    if (!ok)
+        throw new Error(`cannot read ${path}`);
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (view.getUint32(0, true) !== 0x950412de)
+        throw new Error(`bad .mo magic in ${path}`);
+    const count = view.getUint32(8, true);
+    const originals = view.getUint32(12, true);
+    const translations = view.getUint32(16, true);
+    const read = (table, index) => {
+        const length = view.getUint32(table + index * 8, true);
+        const offset = view.getUint32(table + index * 8 + 4, true);
+        return new TextDecoder().decode(bytes.slice(offset, offset + length));
+    };
+    const map = new Map();
+    for (let index = 0; index < count; index++)
+        map.set(read(originals, index), read(translations, index));
+    return map;
+}
+
 function leaves(node) {
     const out = [];
     for (const value of Object.values(node)) {
@@ -77,6 +100,11 @@ function readPo(lang) {
     return parsePo(new TextDecoder().decode(bytes));
 }
 
+function readMo(lang) {
+    return parseMo(GLib.build_filenamev([root, 'src', 'deepmon@fstronin', 'locale', lang,
+        'LC_MESSAGES', 'deepmon.mo']));
+}
+
 export const tests = [
     {name: 'все строки есть в ru.po и zh_CN.po', fn: t => {
         const ru = readPo('ru');
@@ -91,17 +119,17 @@ export const tests = [
         }
         t.deepEq(missing, []);
     }},
-    {name: 'ru, zh_CN и en отдают свои строки', fn: t => {
-        const probe = GLib.build_filenamev([root, 'tests', 'locale-probe.js']);
-        const read = lang => {
-            const [ok, stdout, stderr] = GLib.spawn_command_line_sync(
-                `/bin/sh -c "LANGUAGE=${lang} gjs -m '${probe}'"`);
-            if (!ok)
-                return [`error: ${new TextDecoder().decode(stderr)}`];
-            return new TextDecoder().decode(stdout).trim().split('\n');
-        };
-        t.deepEq(read('ru'), ['Настройки', '3 дня']);
-        t.deepEq(read('zh_CN'), ['设置', '3 天']);
-        t.deepEq(read('en'), ['Settings', '3 days']);
+    {name: 'скомпилированные каталоги содержат переводы', fn: t => {
+        const ru = readMo('ru');
+        const zh = readMo('zh_CN');
+        t.eq(ru.get('Settings'), 'Настройки');
+        t.eq(zh.get('Settings'), '设置');
+        t.eq(ru.get('cli\u0004API key'), 'ключ API');
+    }},
+    {name: 'формы множественного числа в каталогах', fn: t => {
+        const ru = readMo('ru').get('day\u0000days').split('\u0000');
+        const zh = readMo('zh_CN').get('day\u0000days').split('\u0000');
+        t.deepEq(ru, ['день', 'дня', 'дней']);
+        t.deepEq(zh, ['天']);
     }},
 ];

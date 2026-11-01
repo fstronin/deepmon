@@ -1,156 +1,142 @@
-# deepmon — баланс и расходы DeepSeek API в GNOME Shell
+# deepmon — DeepSeek API balance and spending in GNOME Shell
 
-Индикатор в верхней панели GNOME 50: остаток на счёте DeepSeek, трата за сегодня
-и подробности по клику. Когда дневная трата превышает заданный порог, приходит
-уведомление. Ставится пакетом `.deb`.
+A GNOME Shell 50 extension: the account balance and today's spending in the top
+bar, a popup with today/7/30-day totals and a per-day chart, and a notification
+when the daily spending limit is crossed. Distributed as a `.deb` package, with
+the API key kept in the GNOME keyring.
 
-```
-¥118.40 ↓0.62        ← панель: баланс и трата за сегодня
-┌ DeepSeek API ────────────────────────┐
-│ ¥118.40                              │
-│ обновлено 12:34                      │
-│ Сегодня   7 дней   30 дней           │
-│ 0.62      4.10     17.85 · 12 дн.    │
-│ [столбцы трат по дням]                │
-│ Обновить сейчас                      │
-│ Порог: ¥1.00/день                    │
-│ platform.deepseek.com                │
-└──────────────────────────────────────┘
-```
+![Popup](docs/popup.png)
 
-## Откуда берутся цифры
+![Panel indicator](docs/panel.png)
 
-DeepSeek отдаёт только баланс: `GET https://api.deepseek.com/user/balance`.
-Публичного API истории расходов нет, поэтому трата считается как **уменьшение
-баланса между соседними опросами**: каждые 15 минут расширение сохраняет
-снапшот, пары снапшотов дают трату. Увеличение баланса (пополнение, грант)
-считается пополнением и трату не уменьшает.
+> The images above are rendered by `docs/render_previews.py` from the real
+> history file: GNOME Shell's screenshot interface is restricted for third
+> parties on Wayland, so they show the same strings, numbers and geometry the
+> popup draws instead of a screen capture.
 
-Следствие, которое нужно знать заранее: **точность суточной траты равна
-интервалу опроса**. День, внутри которого был разрыв (ноутбук спал, сессия не
-работала), помечается `≈` и показывается в popup как приблизительный.
+## Where the numbers come from
 
-## Установка
+DeepSeek exposes a single public endpoint — `GET https://api.deepseek.com/user/balance`.
+There is no public usage history, so spending is derived from **balance deltas
+between polls**: every 15 minutes a snapshot is stored and consecutive pairs give
+the spend. An increase in balance is booked as a top-up, never as negative
+spending.
 
-```sh
-sudo apt install ./gnome-shell-extension-deepmon_1.0.0_all.deb
-# каталоги расширений читаются только при старте сессии:
-# выйдите из сессии и войдите снова
-```
+Precision therefore equals the polling interval: a day with a gap (laptop asleep,
+session closed) is marked `≈` and shown as approximate.
 
-Пакет зависит от `gnome-shell (>= 50)`, `gjs`, `gir1.2-secret-1`; `gnome-keyring`
-рекомендован. Схема gsettings ставится в `/usr/share/glib-2.0/schemas`, поэтому
-расширение включено по умолчанию (если вы не переопределяли список
-`org.gnome.shell enabled-extensions`).
+A more accurate source is optional: with a **platform web session token** the
+extension imports per-day costs from the private dashboard endpoint
+`GET https://platform.deepseek.com/api/v0/usage/by_api_key/cost` and those values
+take precedence over local deltas — so today's figure matches the website even if
+the extension started mid-day.
 
-Удаление: `apt remove gnome-shell-extension-deepmon`. История в
-`~/.local/state/deepmon/history.json` и ключ в связке при этом не удаляются.
-
-## Ключ API
-
-Ключ хранится в GNOME Keyring (атрибуты `application=deepmon`,
-`account=deepseek-api`). Запасной источник — файл `~/.config/deepmon/key` с
-правами `0600`; файл с более широкими правами расширение **не читает** и просит
-`chmod 600`.
+## Install
 
 ```sh
-deepmon-key set          # ввод без эха, ключ не попадает в историю и в ps
-deepmon-key status       # источник и отпечаток sha256
-deepmon-key fingerprint
-deepmon-key delete       # убрать из связки (файл не трогается)
+sudo apt install ./gnome-shell-extension-deepmon_<version>_all.deb
+# extension directories are scanned at session start: log out and back in
+```
+
+Depends on `gnome-shell (>= 50)`, `gjs`, `gir1.2-secret-1`; `gnome-keyring` is
+recommended. The gsettings schema and an override enabling the extension are
+installed system-wide.
+
+Removal: `apt remove gnome-shell-extension-deepmon`. The history in
+`~/.local/state/deepmon/history.json` and the keyring entries are kept.
+
+## Secrets
+
+```sh
+deepmon-key set              # API key, hidden input, stored in the keyring
+deepmon-key set --platform   # platform session token (optional, enables history import)
+deepmon-key status           # source and fingerprint of both secrets
+deepmon-key delete [--platform]
 pass show deepseek | deepmon-key set --stdin
 ```
 
-### История за прошлые дни (необязательно)
+- API key: keyring item with `application=deepmon`, `account=deepseek-api`;
+  fallback file `~/.config/deepmon/key` with mode `0600`. A file with wider
+  permissions is **not read** — the popup asks for `chmod 600`.
+- Platform token: `account=deepseek-platform`. Get it from
+  `platform.deepseek.com` → DevTools → Application → Local Storage → `userToken`.
+  It grants full access to the account and can be removed with
+  `deepmon-key delete --platform`.
+- Neither secret is ever printed, logged, passed as an argument or written to
+  gsettings; only a `sha256` fingerprint and the last characters are shown.
+- An expired platform token is detected (`40002`/`40003`, HTTP 401/403): polling
+  stops until the token changes, the popup explains what to run, and one
+  notification is raised.
 
-Ключ API отдаёт только баланс, поэтому история по дням строится из локальных опросов.
-Приватный эндпоинт платформы даёт дневные стоимости, но требует токен веб-сессии:
+## Settings
 
-```sh
-deepmon-key set --platform     # вставить userToken из platform.deepseek.com
-deepmon-key delete --platform
-```
-
-Где взять: platform.deepseek.com → DevTools → Application → Local Storage →
-`userToken`. Токен равен доступу ко всему аккаунту и хранится в связке ключей;
-запросы идут на `GET /api/v0/usage/by_api_key/cost` (непубличный, может измениться).
-Когда токен задан, дневные суммы платформы **главнее** локальной дельты баланса:
-именно поэтому цифра за сегодня совпадает с сайтом, даже если расширение
-запустилось в середине дня. Без токена остаётся локальная оценка с пометкой `≈`.
-
-Тот же ключ можно положить через настройки расширения (`Настройки` → «Ключ API»).
-Если `secret-tool` установлен, работает и он:
-`secret-tool store --label=DeepSeek application deepmon account deepseek-api`.
-
-## Настройки
-
-| Ключ gsettings | Смысл | По умолчанию |
+| Key | Meaning | Default |
 |---|---|---|
-| `refresh-minutes` | интервал опроса | 15 |
-| `daily-limit` | дневной порог в валюте учёта, `0` — выкл | 1.0 |
-| `daily-limit-enabled` | уведомления о пороге | true |
-| `currency` | валюта учёта, пусто — авто (первая в ответе API) | `''` |
+| `refresh-minutes` | polling interval | 15 |
+| `daily-limit` | daily limit in the accounting currency, `0` disables | 1.0 |
+| `daily-limit-enabled` | limit notifications | true |
+| `currency` | accounting currency, empty — auto | `''` |
 | `panel-mode` | `both` / `balance` / `spend` | both |
-| `chart-days` | длина графика | 14 |
-| `api-base-url` | база API (прокси, тесты) | `https://api.deepseek.com` |
-| `key-file` | путь к запасному файлу ключа | `''` → `~/.config/deepmon/key` |
+| `chart-days` | chart length | 14 |
+| `api-base-url` | API base (proxy, tests) | `https://api.deepseek.com` |
+| `platform-base-url` | private dashboard base | `https://platform.deepseek.com` |
+| `key-file` | fallback key file path | `''` → `~/.config/deepmon/key` |
 
 ```sh
 gsettings set org.gnome.shell.extensions.deepmon daily-limit 0.5
 gsettings set org.gnome.shell.extensions.deepmon currency USD
 ```
 
-Смена валюты не смешивает данные: старая история переименовывается в
-`history.json.archive-<валюта>-<время>`, учёт начинается с текущего снапшота.
+Changing the accounting currency does not mix data: the old history is renamed to
+`history.json.archive-<currency>-<time>` and tracking restarts from the current
+snapshot.
 
-## Проверка
+## Languages
 
-```sh
-make test         # 109 тестов домена, адаптеров и CLI (gjs, без шелла)
-make test-net     # 9 тестов HTTP-адаптеров против локального mock-сервера
-make verify-ui    # headless gnome-shell: состояние «нет ключа» и отсутствие утечек акторов
-make verify-e2e   # headless + mock API + ключ: полный цикл, история на диске
-make verify-system # headless в системной раскладке: без schemas/ внутри расширения
-make deb          # сборка пакета (нужен debhelper)
-```
-
-## Разработка
+Interface strings are English msgids in `src/deepmon@fstronin/strings.js`;
+translations live in `po/`. Russian and Simplified Chinese ship today.
 
 ```sh
-make dev-install   # копия в ~/.local/share/gnome-shell/extensions (без sudo)
-make dev-remove    # убрать пользовательскую копию
+make po                                  # po/*.po → locale/<lang>/LC_MESSAGES/deepmon.mo
+msgfmt --check -o /dev/null po/ru.po     # validate a catalog
+LANGUAGE=zh_CN deepmon-key status        # check the CLI in another language
 ```
 
-Одновременно пользовательская и системная копии не поддерживаются: перед
-установкой пакета выполните `make dev-remove`.
+Adding a language: copy `po/ru.po` to `po/<lang>.po`, translate the `msgstr`
+entries, run `make po`. `tests/i18n.test.js` fails when any string from
+`strings.js` is missing from a catalog.
 
-Значения `api-base-url` и `key-file` позволяют направить расширение на локальный
-mock-сервер (`tests/mock_server.py`) и проверять все ветви ошибок без реального
-ключа.
-
-## Ограничения
-
-- один аккаунт и один ключ;
-- разбивки по моделям и токенам нет — публичного API использования нет;
-- ошибки сети уведомлений не порождают, они видны в popup;
-- точность траты равна интервалу опроса, дни с разрывами помечены `≈`.
-
-## Языки
-
-Строки интерфейса — английские msgid в `src/deepmon@fstronin/strings.js`;
-переводы в `po/`. Сейчас есть `ru` и `zh_CN`.
+## Development
 
 ```sh
-make po                                  # po/*.po → src/deepmon@fstronin/locale/<lang>/LC_MESSAGES/deepmon.mo
-msgfmt --check -o /dev/null po/ru.po     # проверить каталог
-LANGUAGE=zh_CN deepmon-key status        # проверить язык CLI
+make test          # 119 domain/adapter/CLI tests (gjs, no shell)
+make test-net      # 9 HTTP adapter tests against a local mock server
+make verify-ui     # headless shell: no-key state, icon, menu, no actor leaks
+make verify-e2e    # headless shell + mock API + key file: full cycle, history on disk
+make verify-system # headless shell in the packaged layout (no schemas/ inside the extension)
+make deb           # build the package (needs debhelper)
+python3 docs/render_previews.py   # regenerate the README previews
 ```
 
-Новый язык: скопировать `po/ru.po` в `po/<lang>.po`, перевести `msgstr`, добавить
-код в список языков в шапке файла, выполнить `make po`. Тест `tests/i18n.test.js`
-падает, если хотя бы одна строка из `strings.js` отсутствует в каталоге.
+Fast iteration without a package:
 
-## Лицензия
+```sh
+make dev-install   # copy into ~/.local/share/gnome-shell/extensions
+make dev-remove    # remove the user copy (required before installing the .deb)
+```
 
-MIT. Логотип-кит в шапке popup — favicon с deepseek.com, используется как
-указание на сервис; права на него принадлежат DeepSeek.
+Module imports are cached for the session, so UI changes require a re-login.
+
+## Limitations
+
+- one account and one key; a session token is optional but grants full account
+  access;
+- no per-model or per-token breakdown — the API does not expose it;
+- network errors never raise notifications, they are shown in the popup;
+- spending precision equals the polling interval, days with gaps are marked `≈`;
+- the platform cost endpoint is private and may change without notice.
+
+## License
+
+MIT. The whale logo is the favicon from `deepseek.com`, used to refer to the
+service; the mark belongs to DeepSeek.

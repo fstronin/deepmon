@@ -5,7 +5,9 @@ import Adw from 'gi://Adw';
 import Secret from 'gi://Secret';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import {KeyringKeyReader, KEYRING_ATTRIBUTES, keyringSchema} from './storage/KeyringKeyReader.js';
-import {fingerprint} from './storage/KeyReader.js';
+import {FileKeyReader} from './storage/FileKeyReader.js';
+import {KeyReader, fingerprint} from './storage/KeyReader.js';
+import {Config} from './config/Config.js';
 
 const PANEL_MODES = ['both', 'balance', 'spend'];
 const PANEL_TITLES = ['Баланс и трата', 'Только баланс', 'Только трата'];
@@ -23,7 +25,27 @@ export default class DeepmonPreferences extends ExtensionPreferences {
         page.add(this._limitGroup(settings));
         page.add(this._refreshGroup(settings));
         page.add(this._panelGroup(settings));
-        page.add(this._keyGroup(window));
+        page.add(this._currencyGroup(settings));
+        page.add(this._keyGroup(settings, window));
+    }
+
+    _currencyGroup(settings) {
+        const group = new Adw.PreferencesGroup({title: 'Валюта'});
+        const row = new Adw.EntryRow({title: 'Код валюты (пусто — авто)'});
+        row.text = settings.get_string('currency');
+        row.connect('changed', () => {
+            const value = row.text.trim().toUpperCase();
+            const valid = value === '' || /^[A-Z]{3}$/.test(value);
+            row.remove_css_class('error');
+            if (!valid) {
+                row.add_css_class('error');
+                return;
+            }
+            if (value !== settings.get_string('currency'))
+                settings.set_string('currency', value);
+        });
+        group.add(row);
+        return group;
     }
 
     _limitGroup(settings) {
@@ -80,8 +102,9 @@ export default class DeepmonPreferences extends ExtensionPreferences {
         return group;
     }
 
-    _keyGroup(window) {
+    _keyGroup(settings, window) {
         const group = new Adw.PreferencesGroup({title: 'Ключ API'});
+        const config = new Config(settings);
         const row = new Adw.ActionRow({title: 'Ключ', subtitle: 'проверяю…'});
 
         const saveButton = new Gtk.Button({label: 'Сохранить…', valign: Gtk.Align.CENTER});
@@ -93,10 +116,17 @@ export default class DeepmonPreferences extends ExtensionPreferences {
         row.bind_property('subtitle', row, 'tooltip_text', GObject.BindingFlags.SYNC_CREATE);
 
         const refreshStatus = () => {
-            new KeyringKeyReader().readKey().then(result => {
-                row.subtitle = result.ok
-                    ? `keyring: sk-…${result.key.slice(-4)} · sha256 ${fingerprint(result.key)}`
-                    : 'не задан в связке ключей';
+            const reader = new KeyReader({
+                keyring: new KeyringKeyReader(),
+                file: new FileKeyReader({path: config.keyFilePath}),
+            });
+            reader.readKey().then(result => {
+                if (!result.ok) {
+                    row.subtitle = 'не задан ни в связке ключей, ни в файле';
+                    return;
+                }
+                const source = result.source === 'keyring' ? 'keyring' : config.keyFilePath;
+                row.subtitle = `${source}: sk-…${result.key.slice(-4)} · sha256 ${fingerprint(result.key)}`;
             });
         };
         refreshStatus();

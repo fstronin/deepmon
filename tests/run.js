@@ -19,6 +19,16 @@ for (let info = enumerator.next_file(null); info !== null; info = enumerator.nex
 }
 names.sort();
 
+function selected(name) {
+    const only = ARGV.indexOf('--only');
+    const skip = ARGV.indexOf('--skip');
+    if (only !== -1 && !name.includes(ARGV[only + 1]))
+        return false;
+    if (skip !== -1 && name.includes(ARGV[skip + 1]))
+        return false;
+    return true;
+}
+
 function deepEqual(a, b) {
     if (a === b)
         return true;
@@ -49,6 +59,8 @@ let passed = 0;
 const failed = [];
 
 for (const file of names) {
+    if (!selected(file))
+        continue;
     let mod;
     try {
         mod = await import(Gio.File.new_for_path(GLib.build_filenamev([testDir, file])).get_uri());

@@ -10,10 +10,11 @@ import {localDate} from './spending/History.js';
 import {KeyReader} from './storage/KeyReader.js';
 import {KeyringKeyReader} from './storage/KeyringKeyReader.js';
 import {FileKeyReader} from './storage/FileKeyReader.js';
-import {evaluate, alertText} from './alerting/DailyLimit.js';
+import {dispatchAlert} from './alerting/AlertFlow.js';
 import {ShellNotifier} from './alerting/ShellNotifier.js';
 import {Indicator} from './panel/Indicator.js';
 import {buildViewModel} from './panel/format.js';
+import {mergeRefresh} from './panel/viewState.js';
 
 const UUID = 'deepmon@fstronin';
 const PLATFORM_URL = 'https://platform.deepseek.com';
@@ -43,9 +44,7 @@ export default class DeepmonExtension extends Extension {
         this._timerId = null;
         this._timerMinutes = null;
         this._lastSuccessAt = null;
-        this._lastSummary = null;
-        this._lastNotice = null;
-        this._lastError = null;
+        this._merged = {summary: null, notice: null, error: null};
 
         this._indicator = new Indicator({
             onRefresh: () => this._requestRefresh({force: true}),
@@ -82,9 +81,7 @@ export default class DeepmonExtension extends Extension {
         this._cancellable = null;
         this._config = null;
         this._settings = null;
-        this._lastSummary = null;
-        this._lastNotice = null;
-        this._lastError = null;
+        this._merged = {summary: null, notice: null, error: null};
     }
 
     _requestRefresh({force = false} = {}) {
@@ -103,11 +100,9 @@ export default class DeepmonExtension extends Extension {
             if (result.skipped)
                 return;
 
-            this._lastSummary = result.summary;
-            this._lastNotice = result.notice;
-            this._lastError = result.error;
-            if (result.summary?.updatedAt)
-                this._lastSuccessAt = result.summary.updatedAt;
+            this._merged = mergeRefresh(this._merged, result);
+            if (this._merged.summary?.updatedAt)
+                this._lastSuccessAt = this._merged.summary.updatedAt;
 
             this._render(this._viewModel());
             this._handleLimit(result);
@@ -120,9 +115,9 @@ export default class DeepmonExtension extends Extension {
 
     _viewModel() {
         return buildViewModel({
-            summary: this._lastSummary,
-            notice: this._lastNotice,
-            error: this._lastError,
+            summary: this._merged.summary,
+            notice: this._merged.notice,
+            error: this._merged.error,
             panelMode: this._config?.panelMode ?? 'both',
             limitCents: this._config?.dailyLimitCents ?? 0,
         });
@@ -135,24 +130,15 @@ export default class DeepmonExtension extends Extension {
     _handleLimit({summary, state}) {
         if (!summary || !state)
             return;
-        const date = localDate(Math.floor(Date.now() / 1000));
-        const decision = evaluate({
+        dispatchAlert({
             summary,
             limitCents: this._config.dailyLimitCents,
             enabled: this._config.alertsEnabled,
-            alerts: state.alerts,
-            date,
+            state,
+            date: localDate(Math.floor(Date.now() / 1000)),
+            save: next => this._store.save(next),
+            notify: payload => this._notifier.notify(payload),
         });
-        if (!decision.fire)
-            return;
-
-        state.alerts[date] = {limit: decision.limit, spend: decision.spend};
-        this._store.save(state);
-        this._notifier.notify(alertText({
-            spend: decision.spend,
-            limit: decision.limit,
-            currency: summary.currency,
-        }));
     }
 
     _onSettingsChanged() {
@@ -162,6 +148,10 @@ export default class DeepmonExtension extends Extension {
         if (minutes !== this._timerMinutes)
             this._armTimer(minutes);
         this._source = new SoupBalanceSource({baseUrl: this._config.apiBaseUrl});
+        this._keyReader = new KeyReader({
+            keyring: new KeyringKeyReader(),
+            file: new FileKeyReader({path: this._config.keyFilePath}),
+        });
         this._refreshUnit = new RefreshSpending({
             source: this._source,
             store: this._store,

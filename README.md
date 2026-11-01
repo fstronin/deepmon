@@ -89,7 +89,7 @@ gsettings set org.gnome.shell.extensions.deepmon currency USD
 ## Проверка
 
 ```sh
-make test         # 80 тестов домена и адаптеров (gjs, без шелла)
+make test         # 92 теста домена, адаптеров и CLI (gjs, без шелла)
 make test-net     # 7 тестов HTTP-адаптера против локального mock-сервера
 make verify-ui    # headless gnome-shell: состояние «нет ключа» и отсутствие утечек акторов
 make verify-e2e   # headless + mock API + ключ: полный цикл, история на диске

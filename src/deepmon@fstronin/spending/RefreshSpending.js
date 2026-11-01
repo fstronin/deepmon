@@ -41,6 +41,7 @@ export class RefreshSpending {
         const loaded = this._store.load();
         if (!loaded.ok)
             return this._result({error: {code: loaded.code, detail: loaded.detail}});
+        const warning = loaded.warning ?? null;
 
         const response = await this._source.request({key: keyResult.key, cancellable});
         if (!response.ok) {
@@ -81,8 +82,8 @@ export class RefreshSpending {
         this._authFingerprint = null;
 
         return saved.ok
-            ? {summary, notice: adopted.notice, state, error: null}
-            : {summary, notice: adopted.notice, state, error: {code: 'storage', detail: saved.detail}};
+            ? {summary, notice: adopted.notice, warning, state, error: null}
+            : {summary, notice: adopted.notice, warning, state, error: {code: 'storage', detail: saved.detail}};
     }
 
     _interval() {
@@ -90,6 +91,6 @@ export class RefreshSpending {
     }
 
     _result({error = null, skipped = undefined} = {}) {
-        return {summary: null, notice: null, state: null, error, skipped};
+        return {summary: null, notice: null, state: null, error, skipped, warning: null};
     }
 }

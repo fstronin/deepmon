@@ -31,7 +31,6 @@ install -m 0755 debian/postinst "$STAGE/DEBIAN/postinst"
 install -m 0755 debian/postrm "$STAGE/DEBIAN/postrm"
 
 gzip -9n "$STAGE/usr/share/man/man1/deepmon-key.1"
-glib-compile-schemas "$STAGE/usr/share/glib-2.0/schemas"
 
 dpkg-deb --build --root-owner-group "$STAGE" "$OUT"
 echo "собран пакет: $OUT"

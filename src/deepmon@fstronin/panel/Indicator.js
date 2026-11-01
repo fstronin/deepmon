@@ -44,6 +44,8 @@ export const Indicator = GObject.registerClass({
         this._balanceLabel.text = view.balanceText || '—';
         this._extraLabel.text = (view.extras ?? []).join(' · ');
         this._extraLabel.visible = (view.extras ?? []).length > 0;
+        this._fundingLabel.text = (view.funding ?? []).join(' · ');
+        this._fundingLabel.visible = (view.funding ?? []).length > 0;
         this._statusLabel.text = view.statusText || '';
         this._statusLabel.visible = Boolean(view.statusText);
 
@@ -78,10 +80,12 @@ export const Indicator = GObject.registerClass({
         this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
         this._balanceLabel = new St.Label({text: '—', style_class: 'deepmon-balance'});
         this._extraLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
+        this._fundingLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
         this._statusLabel = new St.Label({text: '', style_class: 'deepmon-status', visible: false});
         headerBox.add_child(this._titleLabel);
         headerBox.add_child(this._balanceLabel);
         headerBox.add_child(this._extraLabel);
+        headerBox.add_child(this._fundingLabel);
         headerBox.add_child(this._statusLabel);
         header.add_child(headerBox);
         this.menu.addMenuItem(header);

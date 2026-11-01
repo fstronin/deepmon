@@ -18,6 +18,8 @@ export const S = {
         week: '7 дней',
         month: '30 дней',
         unavailable: 'баланс исчерпан или недоступен',
+        granted: 'грант {amount}',
+        toppedUp: 'пополнено {amount}',
         daysSuffix: ' · {days} дн.',
         approxPrefix: '≈',
     },

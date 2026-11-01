@@ -29,18 +29,21 @@ check usr/share/gnome-shell/extensions/deepmon@fstronin/prefs.js
 check usr/bin/deepmon-key
 check usr/share/man/man1/deepmon-key.1.gz
 check usr/share/glib-2.0/schemas/org.gnome.shell.extensions.deepmon.gschema.xml
-check usr/share/glib-2.0/schemas/gschemas.compiled
+check usr/share/glib-2.0/schemas/gnome-shell-extension-deepmon.gschema.override
 
-if [ -e "$WORK/usr/share/gnome-shell/extensions/deepmon@fstronin/schemas/gschemas.compiled" ]; then
-    echo "FAIL скомпилированная схема попала в каталог расширения"
+if grep -q "enabled-extensions=\['deepmon@fstronin'\]" \
+    "$WORK/usr/share/glib-2.0/schemas/gnome-shell-extension-deepmon.gschema.override"; then
+    echo "ok расширение включается по умолчанию"
+else
+    echo "FAIL override не содержит enabled-extensions"
     fail=1
 fi
 
-if grep -q 'org.gnome.shell.extensions.deepmon' "$WORK/usr/share/glib-2.0/schemas/gschemas.compiled"; then
-    echo "ok схема скомпилирована"
-else
-    echo "FAIL схема не скомпилирована"
+if [ -e "$WORK/usr/share/glib-2.0/schemas/gschemas.compiled" ]; then
+    echo "FAIL скомпилированная схема не должна поставляться пакетом"
     fail=1
+else
+    echo "ok gschemas.compiled не поставляется"
 fi
 
 exit "$fail"

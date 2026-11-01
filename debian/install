@@ -2,3 +2,4 @@ src/deepmon@fstronin usr/share/gnome-shell/extensions/
 bin/deepmon-key usr/bin/
 man/deepmon-key.1 usr/share/man/man1/
 src/deepmon@fstronin/schemas/org.gnome.shell.extensions.deepmon.gschema.xml usr/share/glib-2.0/schemas/
+debian/gnome-shell-extension-deepmon.gschema.override usr/share/glib-2.0/schemas/

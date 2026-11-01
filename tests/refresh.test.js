@@ -108,4 +108,14 @@ export const tests = [
         t.eq(r.state.samples.length, 1);
         t.ok(r.notice, 'notice есть');
     }},
+    {name: 'предупреждение хранилища пробрасывается в результат', fn: async t => {
+        const store = {
+            load: () => ({ok: true, state: H.empty(), warning: 'повреждённый файл сохранён'}),
+            save: () => ({ok: true}),
+            archive: () => ({ok: true, path: '/tmp/archive'}),
+        };
+        const r = await make({source: okSource(snap(11840)), store}).run();
+        t.ok(r.summary, 'сводка есть');
+        t.eq(r.warning, 'повреждённый файл сохранён');
+    }},
 ];

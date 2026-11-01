@@ -42,7 +42,7 @@ export class JsonSpendingStore {
         try {
             this._ensureDir();
             this._file().replace_contents(History.serialize(state), null, false,
-                Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+                Gio.FileCreateFlags.PRIVATE | Gio.FileCreateFlags.REPLACE_DESTINATION, null);
             return {ok: true};
         } catch (error) {
             return {ok: false, code: 'storage', detail: error.message};
@@ -65,13 +65,9 @@ export class JsonSpendingStore {
     }
 
     _ensureDir() {
-        const dir = Gio.File.new_for_path(GLib.path_get_dirname(this._path));
-        try {
-            dir.make_directory_with_parents(null);
-        } catch (error) {
-            if (errorKind(error) !== 'exists')
-                throw error;
-        }
+        const dirPath = GLib.path_get_dirname(this._path);
+        if (GLib.mkdir_with_parents(dirPath, 0o700) !== 0)
+            throw new Error(`не удалось создать ${dirPath}`);
     }
 
     // Повреждённый файл не удаляем: переносим в сторону, чтобы данные остались

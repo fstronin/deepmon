@@ -67,7 +67,17 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
         extras: summary
             ? summary.balances
                 .filter(item => item.currency !== summary.currency)
-                .map(item => format(item.total, item.currency))
+                .map(item => `${item.currency} ${formatAmount(item.total)}`)
+            : [],
+        funding: summary && balance
+            ? [
+                balance.granted > 0
+                    ? S.popup.granted.replace('{amount}', format(balance.granted, balance.currency))
+                    : null,
+                balance.toppedUp > 0
+                    ? S.popup.toppedUp.replace('{amount}', format(balance.toppedUp, balance.currency))
+                    : null,
+            ].filter(line => line !== null)
             : [],
         limitLabel: summary && limitCents > 0
             ? S.popup.limit.replace('{limit}', format(limitCents, summary.currency))

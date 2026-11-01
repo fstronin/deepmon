@@ -56,8 +56,24 @@ async function storage() {
 }
 
 function stdinIsTty() {
-    const [, , , status] = GLib.spawn_command_line_sync('test -t 0');
-    return status === 0;
+    try {
+        const info = Gio.File.new_for_path('/proc/self/fd/0')
+            .query_info('unix::mode', Gio.FileQueryInfoFlags.NONE, null);
+        return (info.get_attribute_uint32('unix::mode') & 0o170000) === 0o020000;
+    } catch (error) {
+        return false;
+    }
+}
+
+// stty должен видеть наш терминал: SubprocessLauncher с флагами NONE наследует stdio,
+// в отличие от spawn_command_line_sync, который подключает ребёнку /dev/null.
+function stty(args) {
+    try {
+        const launcher = new Gio.SubprocessLauncher({flags: Gio.SubprocessFlags.NONE});
+        launcher.spawnv(['stty', ...args]).wait_check(null);
+    } catch (error) {
+        printerr(`stty ${args.join(' ')}: ${error.message}`);
+    }
 }
 
 function readAll() {
@@ -68,12 +84,12 @@ function readAll() {
 function readLineWithEchoOff(prompt) {
     const channel = GLib.IOChannel.unix_new(0);
     printerr(prompt);
-    GLib.spawn_command_line_sync('stty -echo');
+    stty(['-echo']);
     try {
         const [status, line] = channel.read_line();
         return status === GLib.IOStatus.NORMAL ? line : '';
     } finally {
-        GLib.spawn_command_line_sync('stty echo');
+        stty(['echo']);
     }
 }
 

@@ -69,4 +69,17 @@ export const tests = [
         t.eq(listDir(path).filter(name => /^history\.json\.archive-CNY-\d+$/.test(name)).length, 1);
         t.ok(!Gio.File.new_for_path(path).query_exists(null), 'исходный файл исчез');
     }},
+    {name: 'каталог 0700, файл 0600', fn: t => {
+        const base = freshPath();
+        const path = GLib.build_filenamev([GLib.path_get_dirname(base), 'state', 'deepmon', 'history.json']);
+        new JsonSpendingStore({path}).save(H.empty());
+        const dirMode = Gio.File.new_for_path(GLib.path_get_dirname(path))
+            .query_info('unix::mode', Gio.FileQueryInfoFlags.NONE, null)
+            .get_attribute_uint32('unix::mode') & 0o777;
+        const fileMode = Gio.File.new_for_path(path)
+            .query_info('unix::mode', Gio.FileQueryInfoFlags.NONE, null)
+            .get_attribute_uint32('unix::mode') & 0o777;
+        t.eq(dirMode, 0o700);
+        t.eq(fileMode, 0o600);
+    }},
 ];

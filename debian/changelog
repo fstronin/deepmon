@@ -1,3 +1,10 @@
+gnome-shell-extension-deepmon (1.0.2) unstable; urgency=medium
+
+  * Fix platform cost parsing: the private endpoint returns bucket cost as
+    a plain string, not {value}; daily history now actually imports.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:25:00 +0000
+
 gnome-shell-extension-deepmon (1.0.1) unstable; urgency=medium
 
   * Popup redesign: whale logo in the header, 320 px minimum width,

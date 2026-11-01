@@ -115,12 +115,13 @@ export class RefreshSpending {
         if (state.importedAt && now - state.importedAt < this._importIntervalSeconds)
             return {state, error: null};
 
-        const chartDays = this._config.chartDays ?? 14;
+        // Окно покрывает и график, и колонку «30 дней».
+        const span = Math.max(this._config.chartDays ?? 14, 30);
         const startDate = new Date(now * 1000);
         startDate.setHours(0, 0, 0, 0);
-        startDate.setDate(startDate.getDate() - (chartDays - 1));
+        startDate.setDate(startDate.getDate() - (span - 1));
         const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + chartDays);
+        endDate.setDate(endDate.getDate() + span);
 
         let costs;
         try {

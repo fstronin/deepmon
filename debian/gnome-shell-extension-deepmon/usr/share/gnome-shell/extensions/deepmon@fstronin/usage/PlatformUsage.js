@@ -25,7 +25,9 @@ export function parseCostResponse(text, {currency = null} = {}) {
     const totals = new Map();
     for (const series of block.series ?? []) {
         for (const bucket of series?.buckets ?? []) {
-            const value = Number(bucket?.cost?.value);
+            // Реальный ответ отдаёт cost строкой; объект {value} — на случай смены формы.
+            const raw = bucket?.cost;
+            const value = typeof raw === 'object' && raw !== null ? Number(raw.value) : Number(raw);
             if (!Number.isFinite(value) || value <= 0)
                 continue;
             const cents = Math.round(value * 100);

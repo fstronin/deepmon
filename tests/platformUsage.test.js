@@ -60,6 +60,12 @@ export const tests = [
         const text = response({blocks: [block('CNY', [{time: at(2026, 10, 31, 12), cost: {value: '1'}}])]});
         t.eq(parseCostResponse(text, {currency: 'USD'}).code, 'platform-currency');
     }},
+    {name: 'форма {value} тоже поддерживается', fn: t => {
+        const text = response({blocks: [block('USD', [
+            {time: at(2026, 10, 31, 12), cost: {value: '0.44'}},
+        ])]});
+        t.eq(parseCostResponse(text, {currency: 'USD'}).days[0].cents, 44);
+    }},
     {name: 'битый JSON и пустой ответ', fn: t => {
         t.eq(parseCostResponse('{oops', {currency: 'USD'}).code, 'platform-parse');
         t.eq(parseCostResponse(response({blocks: []}), {currency: 'USD'}).code, 'platform-parse');

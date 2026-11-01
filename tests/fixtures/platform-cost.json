@@ -10,11 +10,19 @@
           "currency": "USD",
           "series": [
             {
-              "apiKey": {"id": 42},
+              "apiKey": {
+                "id": 42
+              },
               "model": "deepseek-chat",
               "buckets": [
-                {"time": 1793404800, "cost": {"value": "0.4400"}},
-                {"time": 1793491200, "cost": {"value": "1.2500"}}
+                {
+                  "time": 1793404800,
+                  "cost": "0.4400"
+                },
+                {
+                  "time": 1793491200,
+                  "cost": "1.2500"
+                }
               ]
             }
           ]

@@ -10,3 +10,5 @@ debian/*.debhelper
 tests/tmp/
 src/deepmon@fstronin/schemas/gschemas.compiled
 src/deepmon@fstronin/locale/
+debian/gnome-shell-extension-deepmon/
+debian/*.debhelper.log

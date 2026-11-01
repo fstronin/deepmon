@@ -83,7 +83,7 @@ export const Indicator = GObject.registerClass({
 
         this._icon = new St.Icon({
             icon_size: 22,
-            y_align: Clutter.ActorAlign.CENTER,
+            y_align: Clutter.ActorAlign.START,
             style_class: 'deepmon-icon',
         });
         if (iconPath)
@@ -91,6 +91,17 @@ export const Indicator = GObject.registerClass({
         else
             this._icon.visible = false;
         row.add_child(this._icon);
+
+        const textBox = new St.BoxLayout({vertical: true, x_expand: true});
+
+        // Первая строка: подпись слева, отношение к порогу справа — один базовый уровень.
+        const titleRow = new St.BoxLayout({x_expand: true, style_class: 'deepmon-title-row'});
+        this._titleLabel = new St.Label({
+            text: S.popup.title,
+            style_class: 'deepmon-caption',
+            x_expand: true,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
         this._ratioLabel = new St.Label({
             text: '',
             style_class: 'deepmon-ratio',
@@ -98,16 +109,15 @@ export const Indicator = GObject.registerClass({
             y_align: Clutter.ActorAlign.CENTER,
             visible: false,
         });
+        titleRow.add_child(this._titleLabel);
+        titleRow.add_child(this._ratioLabel);
 
-        const textBox = new St.BoxLayout({vertical: true, x_expand: true});
-        this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
         this._balanceLabel = new St.Label({text: '—', style_class: 'deepmon-balance'});
         this._statusLabel = new St.Label({text: '', style_class: 'deepmon-status', visible: false});
-        textBox.add_child(this._titleLabel);
+        textBox.add_child(titleRow);
         textBox.add_child(this._balanceLabel);
         textBox.add_child(this._statusLabel);
         row.add_child(textBox);
-        row.add_child(this._ratioLabel);
         header.add_child(row);
         this.menu.addMenuItem(header);
 

@@ -1,3 +1,11 @@
+gnome-shell-extension-deepmon (1.0.8) unstable; urgency=medium
+
+  * Header laid out as one caption row: title on the left and the
+    spend/limit ratio on the right share a baseline, the balance sits
+    below, and the whale aligns with the caption row.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:20:00 +0000
+
 gnome-shell-extension-deepmon (1.0.7) unstable; urgency=medium
 
   * Header: the spend/limit ratio is pressed to the right edge (the

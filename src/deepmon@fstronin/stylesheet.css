@@ -37,8 +37,16 @@
     opacity: 0.8;
 }
 
+.deepmon-title-row {
+    spacing: 12px;
+}
+
+.deepmon-icon {
+    margin-top: 1px;
+}
+
 .deepmon-ratio {
-    font-size: 1.3em;
+    font-size: 1.15em;
     font-weight: bold;
     opacity: 0.9;
 }

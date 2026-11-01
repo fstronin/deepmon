@@ -16,6 +16,7 @@ import {ShellNotifier} from './alerting/ShellNotifier.js';
 import {Indicator} from './panel/Indicator.js';
 import {buildViewModel} from './panel/format.js';
 import {mergeRefresh} from './panel/viewState.js';
+import {S} from './strings.js';
 
 const UUID = 'deepmon@fstronin';
 const PLATFORM_URL = 'https://platform.deepseek.com';
@@ -126,6 +127,7 @@ export default class DeepmonExtension extends Extension {
 
             this._render(this._viewModel());
             this._handleLimit(result);
+            this._handlePlatformExpiry(result);
         } catch (error) {
             logError(error, `[${UUID}] refresh`);
         } finally {
@@ -159,6 +161,14 @@ export default class DeepmonExtension extends Extension {
             save: next => this._store.save(next),
             notify: payload => this._notifier.notify(payload),
         });
+    }
+
+    // Токен платформы обновляется только пользователем, поэтому об истечении
+    // сообщаем один раз — по переходу, а не на каждом опросе.
+    _handlePlatformExpiry({platformError}) {
+        if (!platformError?.authExpiredNew)
+            return;
+        this._notifier.notify({title: S.platform.title, body: S.platform.expired});
     }
 
     _onSettingsChanged() {

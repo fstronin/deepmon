@@ -14,6 +14,8 @@ export function empty() {
         imported: {},
         importedCurrency: null,
         importedAt: null,
+        platformAuthFingerprint: null,
+        platformAuthAt: null,
         alerts: {},
         lastSuccessAt: null,
     };
@@ -96,6 +98,22 @@ export function prune(state, {now, sampleRetentionDays = 7, dayRetentionDays = 4
         if (date < dayCutoff)
             delete next.imported[date];
     }
+    return next;
+}
+
+export function markPlatformAuth(state, {fingerprint: tokenFingerprint, now}) {
+    const next = clone(state);
+    next.platformAuthFingerprint = tokenFingerprint;
+    next.platformAuthAt = now;
+    return next;
+}
+
+export function clearPlatformAuth(state) {
+    if (state.platformAuthFingerprint === null && state.platformAuthAt === null)
+        return state;
+    const next = clone(state);
+    next.platformAuthFingerprint = null;
+    next.platformAuthAt = null;
     return next;
 }
 
@@ -258,6 +276,8 @@ export function deserialize(text) {
             imported: parsed.imported ?? {},
             importedCurrency: parsed.importedCurrency ?? null,
             importedAt: parsed.importedAt ?? null,
+            platformAuthFingerprint: parsed.platformAuthFingerprint ?? null,
+            platformAuthAt: parsed.platformAuthAt ?? null,
         },
     };
 }

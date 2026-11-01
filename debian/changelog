@@ -1,3 +1,12 @@
+gnome-shell-extension-deepmon (1.0.4) unstable; urgency=medium
+
+  * Platform session token expiry: codes 40002/40003 and HTTP 401/403
+    are recognised as expiry, the API is not polled again until the
+    token changes, the popup shows an actionable hint and one
+    notification is raised per expired token.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:40:00 +0000
+
 gnome-shell-extension-deepmon (1.0.3) unstable; urgency=medium
 
   * Popup: drop the other-currency/top-up caption line and the

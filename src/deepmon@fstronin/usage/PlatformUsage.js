@@ -1,6 +1,8 @@
 // Разбор приватного ответа платформы usage/by_api_key/cost → дневные суммы в центах.
 import {localDate} from '../spending/History.js';
 
+const EXPIRED_CODES = new Set([40002, 40003]);
+
 export function parseCostResponse(text, {currency = null} = {}) {
     let payload;
     try {
@@ -9,8 +11,12 @@ export function parseCostResponse(text, {currency = null} = {}) {
         return {ok: false, code: 'platform-parse', detail: `не JSON: ${error.message}`};
     }
 
+    if (EXPIRED_CODES.has(payload?.code))
+        return {ok: false, code: 'platform-auth', detail: `code ${payload.code}`};
     if (payload?.code !== 0)
         return {ok: false, code: 'platform-api', detail: `code ${payload?.code}: ${payload?.msg ?? ''}`};
+    if (EXPIRED_CODES.has(payload?.data?.biz_code))
+        return {ok: false, code: 'platform-auth', detail: `biz_code ${payload.data.biz_code}`};
     if (payload?.data?.biz_code !== undefined && payload.data.biz_code !== 0)
         return {ok: false, code: 'platform-api', detail: `biz_code ${payload.data.biz_code}`};
 

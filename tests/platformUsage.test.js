@@ -53,8 +53,12 @@ export const tests = [
         t.eq(r.days.length, 0);
     }},
     {name: 'ошибка энвелопы -> platform-api', fn: t => {
-        t.eq(parseCostResponse(response({code: 40003}), {currency: 'USD'}).code, 'platform-api');
+        t.eq(parseCostResponse(response({code: 40001}), {currency: 'USD'}).code, 'platform-api');
         t.eq(parseCostResponse(response({biz: 1}), {currency: 'USD'}).code, 'platform-api');
+    }},
+    {name: 'истёкшая сессия -> platform-auth', fn: t => {
+        t.eq(parseCostResponse(response({code: 40003}), {currency: 'USD'}).code, 'platform-auth');
+        t.eq(parseCostResponse(response({code: 40002}), {currency: 'USD'}).code, 'platform-auth');
     }},
     {name: 'другой валюты нет -> platform-currency', fn: t => {
         const text = response({blocks: [block('CNY', [{time: at(2026, 10, 31, 12), cost: {value: '1'}}])]});

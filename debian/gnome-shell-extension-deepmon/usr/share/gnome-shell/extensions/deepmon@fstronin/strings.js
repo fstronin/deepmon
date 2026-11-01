@@ -23,6 +23,11 @@ export const S = {
         title: 'DeepSeek: расходы',
         body: 'Сегодня {spend} — выше порога {limit}',
     },
+    platform: {
+        title: 'DeepSeek: токен платформы',
+        expired: 'токен платформы истёк — обновите: deepmon-key set --platform',
+        failed: 'история платформы: {code}',
+    },
     notice: {
         currencyChanged: 'валюта изменена: история по {currency} отложена в архив',
     },

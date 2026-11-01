@@ -137,6 +137,56 @@ export const tests = [
         await unit.run();
         t.eq(calls, 1);
     }},
+    {name: 'истёкший токен: подсказка и никаких повторных запросов', fn: async t => {
+        let calls = 0;
+        const usageSource = {requestCosts: async () => {
+            calls++;
+            return {ok: false, code: 'platform-auth'};
+        }};
+        const platformTokenReader = {readKey: async () => ({ok: true, key: 'platform-token-abcdef', source: 'keyring'})};
+        const store = fakeStore(H.empty());
+        const unit = make({source: okSource(snap(11840)), store, usageSource, platformTokenReader});
+        const first = await unit.run();
+        t.eq(first.warning.includes('истёк'), true);
+        t.eq(first.platformError.authExpiredNew, true);
+        const second = await unit.run();
+        t.eq(calls, 1);
+        t.eq(second.warning.includes('истёк'), true);
+        t.eq(second.platformError.authExpiredNew, false);
+    }},
+    {name: 'после смены токена платформа пробуется снова', fn: async t => {
+        let calls = 0;
+        let token = 'platform-token-aaaa';
+        const usageSource = {requestCosts: async () => {
+            calls++;
+            return {ok: false, code: 'platform-auth'};
+        }};
+        const platformTokenReader = {readKey: async () => ({ok: true, key: token, source: 'keyring'})};
+        const store = fakeStore(H.empty());
+        const unit = make({source: okSource(snap(11840)), store, usageSource, platformTokenReader});
+        await unit.run();
+        token = 'platform-token-bbbb';
+        await unit.run();
+        t.eq(calls, 2);
+    }},
+    {name: 'новый токен после истечения снимает отметку', fn: async t => {
+        let fail = true;
+        let token = 'platform-token-cccc';
+        const usageSource = {requestCosts: async () => fail
+            ? {ok: false, code: 'platform-auth'}
+            : {ok: true, currency: 'CNY', days: [{date: '2026-10-30', cents: 44}]}};
+        const platformTokenReader = {readKey: async () => ({ok: true, key: token, source: 'keyring'})};
+        const store = fakeStore(H.empty());
+        const unit = make({source: okSource(snap(11840)), store, usageSource, platformTokenReader});
+        await unit.run();
+        t.ok(store.saved.at(-1).platformAuthFingerprint !== null, 'отметка стоит');
+        fail = false;
+        token = 'platform-token-dddd';
+        const result = await unit.run();
+        t.eq(result.warning, null);
+        t.eq(store.saved.at(-1).platformAuthFingerprint, null);
+        t.eq(store.saved.at(-1).imported['2026-10-30'], 44);
+    }},
     {name: 'без токена платформы импорта нет', fn: async t => {
         let calls = 0;
         const usageSource = {requestCosts: async () => {

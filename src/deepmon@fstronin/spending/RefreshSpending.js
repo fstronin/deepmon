@@ -2,6 +2,7 @@
 import {selectBalance} from '../balance/Balance.js';
 import {fingerprint} from '../storage/KeyReader.js';
 import * as History from './History.js';
+import {S} from '../strings.js';
 
 const DEFAULT_INTERVAL_MINUTES = 15;
 
@@ -87,7 +88,7 @@ export class RefreshSpending {
         summary.balances = response.snapshot.balances;
         this._authFingerprint = null;
 
-        const platformWarning = platform.error ? `история платформы: ${platform.error.code}` : null;
+        const platformWarning = platform.error ? platform.error.detail : null;
         const messages = [warning, platformWarning].filter(Boolean);
         const combinedWarning = messages.length > 0 ? messages.join('; ') : null;
         const extra = platform.error ? {platformError: platform.error} : {};
@@ -110,6 +111,10 @@ export class RefreshSpending {
         }
         if (!token.ok)
             return {state, error: null};
+
+        const tokenFingerprint = fingerprint(token.key);
+        if (state.platformAuthFingerprint === tokenFingerprint)
+            return {state, error: {code: 'platform-auth', detail: S.platform.expired, authExpiredNew: false}};
 
         const now = this._now();
         if (state.importedAt && now - state.importedAt < this._importIntervalSeconds)
@@ -136,13 +141,25 @@ export class RefreshSpending {
             return {state, error: {code: 'platform-internal', detail: error.message}};
         }
 
-        if (!costs.ok)
-            return {state, error: {code: costs.code, detail: costs.detail}};
+        if (!costs.ok) {
+            const expired = costs.code === 'platform-auth';
+            return {
+                state: expired
+                    ? History.markPlatformAuth(state, {fingerprint: tokenFingerprint, now})
+                    : state,
+                error: {
+                    code: costs.code,
+                    detail: expired ? S.platform.expired : S.platform.failed.replace('{code}', costs.code),
+                    authExpiredNew: expired && state.platformAuthFingerprint !== tokenFingerprint,
+                },
+            };
+        }
         if (costs.currency !== state.primaryCurrency)
-            return {state, error: {code: 'platform-currency', detail: `ответ в ${costs.currency}`}};
+            return {state, error: {code: 'platform-currency', detail: S.platform.failed.replace('{code}', 'platform-currency')}};
 
         return {
-            state: History.importCosts(state, {currency: costs.currency, days: costs.days, now}),
+            state: History.clearPlatformAuth(
+                History.importCosts(state, {currency: costs.currency, days: costs.days, now})),
             error: null,
         };
     }

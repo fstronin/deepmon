@@ -160,6 +160,7 @@ export const tests = [
             currency: 'CNY',
             days: [{date: '2026-11-01', cents: 999}, {date: '2026-10-31', cents: 70}],
             now: at(2026, 11, 1, 10, 0),
+            balanceCents: 950,
         });
         const summary = H.summarize(state, at(2026, 11, 1, 12, 0), {chartDays: 14});
         t.eq(summary.today.spend, 999);
@@ -167,6 +168,42 @@ export const tests = [
         t.eq(summary.chart[12].spend, 70);
         t.eq(summary.chart[12].hasData, true);
         t.eq(summary.month.spend, 1069);
+    }},
+    {name: 'трата после импорта добавляется к сегодняшнему дню', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 11, 0), 2000), {intervalMinutes: 15});
+        state = H.importCosts(state, {
+            currency: 'CNY',
+            days: [{date: '2026-11-01', cents: 396}],
+            now: at(2026, 11, 1, 11, 0),
+            balanceCents: 2000,
+        });
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 11, 15), 1950), {intervalMinutes: 15}));
+        const summary = H.summarize(state, at(2026, 11, 1, 11, 20), {chartDays: 14});
+        t.eq(summary.today.spend, 446);
+        t.eq(summary.chart[13].spend, 446);
+    }},
+    {name: 'пополнение после импорта не уменьшает сегодняшнюю трату', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 11, 1, 11, 0), 2000), {intervalMinutes: 15});
+        state = H.importCosts(state, {
+            currency: 'CNY',
+            days: [{date: '2026-11-01', cents: 396}],
+            now: at(2026, 11, 1, 11, 0),
+            balanceCents: 2000,
+        });
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 11, 15), 3000), {intervalMinutes: 15}));
+        t.eq(H.summarize(state, at(2026, 11, 1, 11, 20), {chartDays: 14}).today.spend, 396);
+    }},
+    {name: 'базовая точка прошлого дня не применяется к сегодняшнему', fn: t => {
+        let {state} = H.appendSample(H.empty(), sample(at(2026, 10, 31, 23, 50), 2000), {intervalMinutes: 15});
+        state = H.importCosts(state, {
+            currency: 'CNY',
+            days: [{date: '2026-11-01', cents: 396}],
+            now: at(2026, 10, 31, 23, 50),
+            balanceCents: 2000,
+        });
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 11, 0), 2000), {intervalMinutes: 15}));
+        ({state} = H.appendSample(state, sample(at(2026, 11, 1, 11, 15), 1950), {intervalMinutes: 15}));
+        t.eq(H.summarize(state, at(2026, 11, 1, 11, 20), {chartDays: 14}).today.spend, 50);
     }},
     {name: 'importCosts выживает rebuild и убирается prune', fn: t => {
         const state = H.importCosts(H.empty(), {

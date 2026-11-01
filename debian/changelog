@@ -1,3 +1,12 @@
+gnome-shell-extension-deepmon (1.0.11) unstable; urgency=medium
+
+  * Fix today's spending freezing between platform imports: the balance
+    drop since the import baseline is added to the imported daily cost,
+    and a stale baseline (import from another day) falls back to local
+    balance deltas instead of showing yesterday's platform bucket.
+
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:50:00 +0000
+
 gnome-shell-extension-deepmon (1.0.10) unstable; urgency=medium
 
   * Localization via gettext: English msgids in strings.js, po/ru.po and

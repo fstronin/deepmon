@@ -158,8 +158,12 @@ export class RefreshSpending {
             return {state, error: {code: 'platform-currency', detail: S.platform.failed.replace('{code}', 'platform-currency')}};
 
         return {
-            state: History.clearPlatformAuth(
-                History.importCosts(state, {currency: costs.currency, days: costs.days, now})),
+            state: History.clearPlatformAuth(History.importCosts(state, {
+                currency: costs.currency,
+                days: costs.days,
+                now,
+                balanceCents: state.samples.length > 0 ? state.samples[state.samples.length - 1].total : null,
+            })),
             error: null,
         };
     }

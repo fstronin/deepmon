@@ -16,6 +16,7 @@ export function empty() {
         importedAt: null,
         platformAuthFingerprint: null,
         platformAuthAt: null,
+        baseline: null,
         alerts: {},
         lastSuccessAt: null,
     };
@@ -117,13 +118,17 @@ export function clearPlatformAuth(state) {
     return next;
 }
 
-export function importCosts(state, {currency, days, now, dayRetentionDays = 400}) {
+export function importCosts(state, {currency, days, now, balanceCents = null, dayRetentionDays = 400}) {
     const next = clone(state);
     next.imported ??= {};
     for (const {date, cents} of days)
         next.imported[date] = cents;
     next.importedCurrency = currency;
     next.importedAt = now;
+    // Баланс на момент импорта: платформенная сумма за сегодня устаревает между
+    // импортами, поэтому к ней добавляется падение баланса с этой точки.
+    if (balanceCents !== null)
+        next.baseline = {at: now, total: balanceCents};
 
     const cutoff = localDate(now - dayRetentionDays * 86400);
     for (const date of Object.keys(next.imported)) {
@@ -181,14 +186,37 @@ function shiftDays(unixSeconds, deltaDays) {
 }
 
 export function summarize(state, now, {chartDays, isAvailable = false}) {
+    const todayDate = shiftDays(now, 0);
+    const lastSample = state.samples.length > 0 ? state.samples[state.samples.length - 1] : null;
+
+    const localView = date => {
+        const local = state.days[date];
+        return local
+            ? {spend: local.spend, approx: local.approx, hasData: true, coveredFrom: local.coveredFrom}
+            : {spend: 0, approx: false, hasData: false, coveredFrom: null};
+    };
+
     const dayView = date => {
         const imported = state.imported?.[date];
-        if (imported !== undefined)
+        if (imported === undefined)
+            return localView(date);
+
+        const base = state.baseline;
+        const freshBaseline = Boolean(base) && localDate(base.at) === date;
+
+        // Импорт сегодняшнего дня без базовой точки этого же дня устарел: платформа
+        // отдавала его вчера, и он не знает про траты после полуночи.
+        if (date === todayDate && !freshBaseline) {
+            const local = localView(date);
+            if (local.hasData)
+                return local;
             return {spend: imported, approx: false, hasData: true, coveredFrom: null};
-        const local = state.days[date];
-        if (local)
-            return {spend: local.spend, approx: local.approx, hasData: true, coveredFrom: local.coveredFrom};
-        return {spend: 0, approx: false, hasData: false, coveredFrom: null};
+        }
+
+        let extra = 0;
+        if (date === todayDate && base && lastSample && base.total > lastSample.total)
+            extra = base.total - lastSample.total;
+        return {spend: imported + extra, approx: false, hasData: true, coveredFrom: null};
     };
 
     const sumWindow = size => {
@@ -204,7 +232,7 @@ export function summarize(state, now, {chartDays, isAvailable = false}) {
         return {spend, daysWithData};
     };
 
-    const today = dayView(shiftDays(now, 0));
+    const today = dayView(todayDate);
     const chart = [];
     for (let back = chartDays - 1; back >= 0; back--) {
         const date = shiftDays(now, -back);
@@ -278,6 +306,7 @@ export function deserialize(text) {
             importedAt: parsed.importedAt ?? null,
             platformAuthFingerprint: parsed.platformAuthFingerprint ?? null,
             platformAuthAt: parsed.platformAuthAt ?? null,
+            baseline: parsed.baseline ?? null,
         },
     };
 }

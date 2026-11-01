@@ -8,7 +8,6 @@ Rules-Requires-Root: no
 
 Package: gnome-shell-extension-deepmon
 Architecture: all
-Maintainer: fstronin <fstronin@localhost>
 Depends: gnome-shell (>= 50), gjs, gir1.2-secret-1, ${misc:Depends}
 Recommends: gnome-keyring
 Description: DeepSeek API balance and spending indicator for GNOME Shell

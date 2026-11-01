@@ -24,9 +24,13 @@ done < debian/install
 rm -f "$STAGE/usr/share/gnome-shell/extensions/deepmon@fstronin/schemas/gschemas.compiled"
 
 install -d "$STAGE/DEBIAN"
-sed -n '/^Package:/,$p' debian/control \
-    | sed -e 's/, *\${misc:Depends}//' -e 's/\${misc:Depends}//' \
-    | sed "1a Version: ${VERSION}" > "$STAGE/DEBIAN/control"
+MAINTAINER=$(grep -m1 '^Maintainer:' debian/control | sed 's/^Maintainer: *//')
+{
+    sed -n '/^Package:/,$p' debian/control | head -1
+    echo "Version: ${VERSION}"
+    echo "Maintainer: ${MAINTAINER}"
+    sed -n '/^Package:/,$p' debian/control | tail -n +2
+} | sed -e 's/, *\${misc:Depends}//' -e 's/\${misc:Depends}//' > "$STAGE/DEBIAN/control"
 install -m 0755 debian/postinst "$STAGE/DEBIAN/postinst"
 install -m 0755 debian/postrm "$STAGE/DEBIAN/postrm"
 

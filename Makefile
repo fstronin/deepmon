@@ -1,4 +1,12 @@
-.PHONY: test test-net schemas verify-ui verify-e2e dev-install dev-remove deb verify-deb clean
+.PHONY: all build check test test-net schemas verify-ui verify-e2e dev-install dev-remove deb verify-deb clean
+
+# Первые цели — для dh_auto_build/dh_auto_test: сборки нет, тесты отдельной целью.
+all: build
+
+build:
+	@echo "deepmon: сборки нет, исходники используются как есть"
+
+check: test
 
 test:
 	gjs -m tests/run.js --skip net.test.js

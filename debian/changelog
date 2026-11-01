@@ -6,7 +6,7 @@ gnome-shell-extension-deepmon (1.0.10) unstable; urgency=medium
     manpage follow the session locale. Tests cover catalog completeness
     and per-locale rendering.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:50:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:50:00 +0000
 
 gnome-shell-extension-deepmon (1.0.9) unstable; urgency=medium
 
@@ -14,7 +14,7 @@ gnome-shell-extension-deepmon (1.0.9) unstable; urgency=medium
     drawn at the same large size — the numbers are the main information,
     the title stays a small caption above them.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:30:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:30:00 +0000
 
 gnome-shell-extension-deepmon (1.0.8) unstable; urgency=medium
 
@@ -22,14 +22,14 @@ gnome-shell-extension-deepmon (1.0.8) unstable; urgency=medium
     spend/limit ratio on the right share a baseline, the balance sits
     below, and the whale aligns with the caption row.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:20:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:20:00 +0000
 
 gnome-shell-extension-deepmon (1.0.7) unstable; urgency=medium
 
   * Header: the spend/limit ratio is pressed to the right edge (the
     header row now expands to the popup width) and drawn larger and bold.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:10:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:10:00 +0000
 
 gnome-shell-extension-deepmon (1.0.6) unstable; urgency=medium
 
@@ -37,7 +37,7 @@ gnome-shell-extension-deepmon (1.0.6) unstable; urgency=medium
     spend-to-limit ratio (e.g. $3.96 / 7.00) on the right, highlighted
     with a warning colour and a glyph when the limit is exceeded.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:00:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:00:00 +0000
 
 gnome-shell-extension-deepmon (1.0.5) unstable; urgency=medium
 
@@ -45,7 +45,7 @@ gnome-shell-extension-deepmon (1.0.5) unstable; urgency=medium
     so captions and values share the same centre (a wide label draws its
     text at the start, which pushed numbers left).
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:50:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:50:00 +0000
 
 gnome-shell-extension-deepmon (1.0.4) unstable; urgency=medium
 
@@ -54,7 +54,7 @@ gnome-shell-extension-deepmon (1.0.4) unstable; urgency=medium
     token changes, the popup shows an actionable hint and one
     notification is raised per expired token.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:40:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:40:00 +0000
 
 gnome-shell-extension-deepmon (1.0.3) unstable; urgency=medium
 
@@ -62,14 +62,14 @@ gnome-shell-extension-deepmon (1.0.3) unstable; urgency=medium
     "updated HH:MM" status; the status line now appears only for errors
     and an exhausted balance.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:30:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:30:00 +0000
 
 gnome-shell-extension-deepmon (1.0.2) unstable; urgency=medium
 
   * Fix platform cost parsing: the private endpoint returns bucket cost as
     a plain string, not {value}; daily history now actually imports.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:25:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:25:00 +0000
 
 gnome-shell-extension-deepmon (1.0.1) unstable; urgency=medium
 
@@ -82,11 +82,11 @@ gnome-shell-extension-deepmon (1.0.1) unstable; urgency=medium
   * deepmon-key: --platform for the session token, status shows both
     secrets, stty gets the terminal device explicitly (echo off works).
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:10:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 03:10:00 +0000
 
 gnome-shell-extension-deepmon (1.0.0) unstable; urgency=medium
 
   * Initial release: balance indicator, spending history, daily limit
     notification, keyring-backed API key and deepmon-key CLI.
 
- -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 12:00:00 +0000
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 12:00:00 +0000

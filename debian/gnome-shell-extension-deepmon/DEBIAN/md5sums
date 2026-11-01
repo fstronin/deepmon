@@ -1,6 +1,6 @@
 c849db1583ebfac7b329d1e5e36f3249  usr/bin/deepmon-key
-3d874fc96482f615c8ff787d4f32d624  usr/share/doc/gnome-shell-extension-deepmon/changelog.gz
-cc22b6c384a60cf70f6042c8a6714a0a  usr/share/doc/gnome-shell-extension-deepmon/copyright
+d2a9e7f48d610d38353ef6401ea73cee  usr/share/doc/gnome-shell-extension-deepmon/changelog.gz
+ef697c5152eb43a8ecee3b4556347ba6  usr/share/doc/gnome-shell-extension-deepmon/copyright
 2ec1d2f2b157f569eb8c831fb62c7177  usr/share/glib-2.0/schemas/gnome-shell-extension-deepmon.gschema.override
 bc2e1ea77fb04fede930d026d6ba5d41  usr/share/glib-2.0/schemas/org.gnome.shell.extensions.deepmon.gschema.xml
 74bf280ed709a39bafce6a09cdb985cd  usr/share/gnome-shell/extensions/deepmon@fstronin/alerting/AlertFlow.js
@@ -13,8 +13,8 @@ dc59934b763800ef2c3409375bd8cd1f  usr/share/gnome-shell/extensions/deepmon@fstro
 8f2587971d197879b2b3f579aed07ed7  usr/share/gnome-shell/extensions/deepmon@fstronin/config/Config.js
 053fa0e53d90b1882c2328fd0d9ed997  usr/share/gnome-shell/extensions/deepmon@fstronin/extension.js
 ef1caece49a731c2aa92a647d481acb8  usr/share/gnome-shell/extensions/deepmon@fstronin/icons/deepseek-whale.png
-34b93f889d8831cb0231ee5046e751bf  usr/share/gnome-shell/extensions/deepmon@fstronin/locale/ru/LC_MESSAGES/deepmon.mo
-d795c6976edd8f5dc9c7bea9631ea471  usr/share/gnome-shell/extensions/deepmon@fstronin/locale/zh_CN/LC_MESSAGES/deepmon.mo
+d9d3c25ef86a48bbbfc7904367da4592  usr/share/gnome-shell/extensions/deepmon@fstronin/locale/ru/LC_MESSAGES/deepmon.mo
+398f6dec81c9bd77f6140d05ae1b689b  usr/share/gnome-shell/extensions/deepmon@fstronin/locale/zh_CN/LC_MESSAGES/deepmon.mo
 496fc1892b60444141a96f3e472abbd6  usr/share/gnome-shell/extensions/deepmon@fstronin/metadata.json
 902e8cb20230b9028fd37b177425b277  usr/share/gnome-shell/extensions/deepmon@fstronin/money/Money.js
 24c71f6d59149217d9bb87e036a5fb9f  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/DayChart.js

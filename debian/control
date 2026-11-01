@@ -1,7 +1,7 @@
 Source: gnome-shell-extension-deepmon
 Section: gnome
 Priority: optional
-Maintainer: fstronin <fstronin@localhost>
+Maintainer: Yegor Chuperka <yegor-chuperka@yandex.ru>
 Build-Depends: debhelper-compat (= 13), libglib2.0-bin
 Standards-Version: 4.6.2
 Rules-Requires-Root: no

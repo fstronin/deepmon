@@ -34,8 +34,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            debhelper dpkg-dev libglib2.0-bin gettext \
-            gjs python3 gir1.2-glib-2.0 gir1.2-soup-3.0 gir1.2-secret-1
+            build-essential debhelper dpkg-dev libglib2.0-bin gettext
       - name: Tag matches the package version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |

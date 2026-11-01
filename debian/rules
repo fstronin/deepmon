@@ -6,6 +6,9 @@
 override_dh_install:
 	dh_install -Xgschemas.compiled
 
+override_dh_auto_test:
+	# Тесты гоняет `make test` и CI-джоба tests; сборке пакета нужен только gjs-рантайм.
+
 override_dh_installgsettings:
 	# схема компилируется нашими postinst/postrm
 

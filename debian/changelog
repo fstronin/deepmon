@@ -1,3 +1,11 @@
+gnome-shell-extension-deepmon (1.0.12) unstable; urgency=medium
+
+  * Runtime dependencies completed: gir1.2-soup-3.0 (the extension imports
+    Soup 3 for the balance request) and libglib2.0-bin (maintainer scripts
+    run glib-compile-schemas).
+
+ -- Yegor Chuperka <yegor-chuperka@yandex.ru>  Sat, 01 Nov 2026 04:05:00 +0000
+
 gnome-shell-extension-deepmon (1.0.11) unstable; urgency=medium
 
   * Fix today's spending freezing between platform imports: the balance

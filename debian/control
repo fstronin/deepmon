@@ -8,7 +8,8 @@ Rules-Requires-Root: no
 
 Package: gnome-shell-extension-deepmon
 Architecture: all
-Depends: gnome-shell (>= 50), gjs, gir1.2-secret-1, ${misc:Depends}
+Depends: gnome-shell (>= 50), gjs, gir1.2-secret-1, gir1.2-soup-3.0,
+ libglib2.0-bin, ${misc:Depends}
 Recommends: gnome-keyring
 Description: DeepSeek API balance and spending indicator for GNOME Shell
  Shows the DeepSeek API balance and today's spending in the top bar, a popup

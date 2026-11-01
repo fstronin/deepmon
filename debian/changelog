@@ -1,3 +1,11 @@
+gnome-shell-extension-deepmon (1.0.5) unstable; urgency=medium
+
+  * Period row: the minimum width moved from the value label to the cell,
+    so captions and values share the same centre (a wide label draws its
+    text at the start, which pushed numbers left).
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:50:00 +0000
+
 gnome-shell-extension-deepmon (1.0.4) unstable; urgency=medium
 
   * Platform session token expiry: codes 40002/40003 and HTTP 401/403

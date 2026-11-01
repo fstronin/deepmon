@@ -44,12 +44,12 @@
 
 .deepmon-period-cell {
     spacing: 2px;
+    min-width: 84px;
 }
 
 .deepmon-period-value {
     font-size: 1.1em;
     font-weight: bold;
-    min-width: 72px;
 }
 
 .deepmon-chart {

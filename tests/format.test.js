@@ -38,7 +38,7 @@ export const tests = [
     }},
     {name: 'statusText: баланс исчерпан', fn: t => {
         const view = buildViewModel({summary: {...summary(0), isAvailable: false}, panelMode: 'both'});
-        t.ok(view.statusText.includes('исчерпан'), view.statusText);
+        t.ok(view.statusText.includes('exhausted'), view.statusText);
     }},
     {name: 'barHeights: пропорция, минимум и пустой день', fn: t => {
         const points = [
@@ -67,7 +67,7 @@ export const tests = [
     {name: 'ошибка остаётся в статусной строке', fn: t => {
         const view = buildViewModel({summary: summary(62), error: {code: 'network'},
             panelMode: 'both', limitCents: 100});
-        t.eq(view.statusText.includes('нет связи'), true);
+        t.eq(view.statusText.includes('no connection'), true);
     }},
     {name: 'периоды без хвоста дней', fn: t => {
         const view = buildViewModel({summary: summary(62), panelMode: 'both'});
@@ -79,10 +79,10 @@ export const tests = [
             summary: {...summary(62), month: {spend: 100, daysWithData: n}},
             panelMode: 'both',
         }).periodDays;
-        t.eq(days(1), 'данных: 1 день из 30');
-        t.eq(days(3), 'данных: 3 дня из 30');
-        t.eq(days(12), 'данных: 12 дней из 30');
-        t.eq(days(22), 'данных: 22 дня из 30');
+        t.eq(days(1), 'data: 1 day of 30');
+        t.eq(days(3), 'data: 3 days of 30');
+        t.eq(days(12), 'data: 12 days of 30');
+        t.eq(days(22), 'data: 22 days of 30');
         t.eq(days(30), null);
     }},
 ];

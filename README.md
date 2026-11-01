@@ -135,6 +135,21 @@ mock-сервер (`tests/mock_server.py`) и проверять все ветв
 - ошибки сети уведомлений не порождают, они видны в popup;
 - точность траты равна интервалу опроса, дни с разрывами помечены `≈`.
 
+## Языки
+
+Строки интерфейса — английские msgid в `src/deepmon@fstronin/strings.js`;
+переводы в `po/`. Сейчас есть `ru` и `zh_CN`.
+
+```sh
+make po                                  # po/*.po → src/deepmon@fstronin/locale/<lang>/LC_MESSAGES/deepmon.mo
+msgfmt --check -o /dev/null po/ru.po     # проверить каталог
+LANGUAGE=zh_CN deepmon-key status        # проверить язык CLI
+```
+
+Новый язык: скопировать `po/ru.po` в `po/<lang>.po`, перевести `msgstr`, добавить
+код в список языков в шапке файла, выполнить `make po`. Тест `tests/i18n.test.js`
+падает, если хотя бы одна строка из `strings.js` отсутствует в каталоге.
+
 ## Лицензия
 
 MIT. Логотип-кит в шапке popup — favicon с deepseek.com, используется как

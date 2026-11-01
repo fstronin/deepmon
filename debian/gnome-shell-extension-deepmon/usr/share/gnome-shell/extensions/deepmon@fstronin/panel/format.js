@@ -1,6 +1,6 @@
 // Чистая view-модель панели и геометрия столбцов графика.
 import {format, formatAmount} from '../money/Money.js';
-import {S} from '../strings.js';
+import {S, days} from '../strings.js';
 
 function hhmm(unixSeconds) {
     const date = new Date(unixSeconds * 1000);
@@ -22,16 +22,6 @@ function errorText(error) {
 function periodText(period, withApprox) {
     const prefix = withApprox && period.approx ? S.popup.approxPrefix : '';
     return `${prefix}${formatAmount(period.spend)}`;
-}
-
-function pluralDays(count) {
-    const mod10 = count % 10;
-    const mod100 = count % 100;
-    if (mod10 === 1 && mod100 !== 11)
-        return `${count} день`;
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14))
-        return `${count} дня`;
-    return `${count} дней`;
 }
 
 export function buildViewModel({summary, notice = null, error = null, panelMode = 'both', limitCents = 0}) {
@@ -69,7 +59,8 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
             }
             : {today: '—', week: '—', month: '—'},
         periodDays: summary && summary.month.daysWithData < 30
-            ? S.popup.periodDays.replace('{days}', pluralDays(summary.month.daysWithData))
+            ? S.popup.periodDays.replace('{days}',
+                `${summary.month.daysWithData} ${days(summary.month.daysWithData)}`)
             : null,
         chart: summary?.chart ?? [],
         limitRatio: summary && limitCents > 0

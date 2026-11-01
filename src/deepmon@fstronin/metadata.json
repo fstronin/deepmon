@@ -1,8 +1,11 @@
 {
   "uuid": "deepmon@fstronin",
   "name": "DeepSeek Usage",
-  "description": "Баланс и расходы DeepSeek API в панели: сводка за сегодня, 7 и 30 дней, график по дням и уведомление о дневном пороге.",
-  "shell-version": ["50"],
+  "description": "Shows the DeepSeek API balance and today's spending in the top bar, a popup with today/7/30 day totals and a per-day chart, and notifies when the daily limit is exceeded.",
+  "shell-version": [
+    "50"
+  ],
   "version": 1,
-  "settings-schema": "org.gnome.shell.extensions.deepmon"
+  "settings-schema": "org.gnome.shell.extensions.deepmon",
+  "gettext-domain": "deepmon"
 }

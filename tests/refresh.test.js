@@ -147,11 +147,11 @@ export const tests = [
         const store = fakeStore(H.empty());
         const unit = make({source: okSource(snap(11840)), store, usageSource, platformTokenReader});
         const first = await unit.run();
-        t.eq(first.warning.includes('истёк'), true);
+        t.eq(first.warning.includes('expired'), true);
         t.eq(first.platformError.authExpiredNew, true);
         const second = await unit.run();
         t.eq(calls, 1);
-        t.eq(second.warning.includes('истёк'), true);
+        t.eq(second.warning.includes('expired'), true);
         t.eq(second.platformError.authExpiredNew, false);
     }},
     {name: 'после смены токена платформа пробуется снова', fn: async t => {

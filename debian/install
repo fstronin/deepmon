@@ -12,6 +12,7 @@ src/deepmon@fstronin/spending usr/share/gnome-shell/extensions/deepmon@fstronin/
 src/deepmon@fstronin/storage usr/share/gnome-shell/extensions/deepmon@fstronin/
 src/deepmon@fstronin/usage usr/share/gnome-shell/extensions/deepmon@fstronin/
 src/deepmon@fstronin/icons usr/share/gnome-shell/extensions/deepmon@fstronin/
+src/deepmon@fstronin/locale usr/share/gnome-shell/extensions/deepmon@fstronin/
 bin/deepmon-key usr/bin/
 man/deepmon-key.1 usr/share/man/man1/
 src/deepmon@fstronin/schemas/org.gnome.shell.extensions.deepmon.gschema.xml usr/share/glib-2.0/schemas/

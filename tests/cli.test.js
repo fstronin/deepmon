@@ -18,16 +18,16 @@ function shell(command) {
 export const tests = [
     {name: 'на tty без --stdin читает ключ, а не жалуется на отсутствие ввода', fn: t => {
         const result = shell(`printf 'garbage\\n' | script -qec '${cli} set' /dev/null`);
-        t.eq(result.stdout.includes('используйте --stdin'), false);
-        t.eq(result.stdout.includes('неверный формат'), true);
+        t.eq(result.stdout.includes('use --stdin'), false);
+        t.eq(result.stdout.includes('invalid key format'), true);
     }},
     {name: 'пайп без --stdin отвергается', fn: t => {
         const result = shell(`printf 'sk-abcdefghijklmnop1234' | '${cli}' set`);
-        t.eq(result.stderr.includes('используйте --stdin'), true);
+        t.eq(result.stderr.includes('use --stdin'), true);
     }},
     {name: 'токен платформы: мусор отвергается', fn: t => {
         const result = shell(`printf 'garbage' | '${cli}' set --platform --stdin`);
-        t.eq(result.stderr.includes('неверный токен'), true);
+        t.eq(result.stderr.includes('invalid platform token'), true);
     }},
     {name: 'ввод ключа не отражается в терминале', fn: t => {
         // Ввод подаётся с задержкой: иначе он оказывается в pty до того, как CLI
@@ -35,6 +35,6 @@ export const tests = [
         const result = shell(`sh -c 'sleep 0.5; echo garbage-secret' | script -qec '${cli} set' /dev/null`);
         t.eq(result.stdout.includes('garbage-secret'), false);
         t.eq(result.stdout.includes('Inappropriate ioctl'), false);
-        t.eq(result.stdout.includes('неверный формат'), true);
+        t.eq(result.stdout.includes('invalid key format'), true);
     }},
 ];

@@ -1,0 +1,311 @@
+# 简体中文翻译 (deepmon)。
+# msgid 为 src/deepmon@fstronin/strings.js 中的英文原文。
+msgid ""
+msgstr ""
+"Project-Id-Version: deepmon 1.0.10\n"
+"Report-Msgid-Bugs-To: fstronin <fstronin@localhost>\n"
+"POT-Creation-Date: 2026-11-01 04:40+0000\n"
+"PO-Revision-Date: 2026-11-01 04:40+0000\n"
+"Last-Translator: fstronin <fstronin@localhost>\n"
+"Language-Team: Simplified Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "↓"
+msgstr "↓"
+
+msgid "⚠"
+msgstr "⚠"
+
+msgid "DeepSeek ⚠"
+msgstr "DeepSeek ⚠"
+
+msgid "DeepSeek API"
+msgstr "DeepSeek API"
+
+msgid "Refresh now"
+msgstr "立即刷新"
+
+msgid "platform.deepseek.com"
+msgstr "platform.deepseek.com"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Today"
+msgstr "今天"
+
+msgid "7 days"
+msgstr "7 天"
+
+msgid "30 days"
+msgstr "30 天"
+
+msgid "balance exhausted or unavailable"
+msgstr "余额已用尽或不可用"
+
+msgid "data: {days} of 30"
+msgstr "数据：{days} / 30"
+
+msgid "{spent} / {limit}"
+msgstr "{spent} / {limit}"
+
+msgid "≈"
+msgstr "≈"
+
+msgid "day"
+msgid_plural "days"
+msgstr[0] "天"
+
+msgid "DeepSeek: spending"
+msgstr "DeepSeek：支出"
+
+msgid "Today {spend} — above the limit {limit}"
+msgstr "今天 {spend} — 已超过阈值 {limit}"
+
+msgid "DeepSeek: platform token"
+msgstr "DeepSeek：平台令牌"
+
+msgid "platform token expired — renew with: deepmon-key set --platform"
+msgstr "平台令牌已过期 — 请更新：deepmon-key set --platform"
+
+msgid "platform history: {code}"
+msgstr "平台历史记录：{code}"
+
+msgid "currency changed: history for {currency} moved to the archive"
+msgstr "币种已更改：{currency} 的历史记录已归档"
+
+msgid "no API key: deepmon-key set"
+msgstr "未设置密钥：deepmon-key set"
+
+msgid "key file permissions are wider than 0600: chmod 600 {path}"
+msgstr "密钥文件权限比 0600 更宽：chmod 600 {path}"
+
+msgid "keyring is locked: open Passwords and Keys"
+msgstr "钥匙环已锁定：请打开「密码和密钥」"
+
+msgid "key rejected ({status})"
+msgstr "密钥被拒绝（{status}）"
+
+msgid "rate limited, try again later"
+msgstr "请求被限流，请稍后再试"
+
+msgid "no connection since {time}"
+msgstr "自 {time} 起无连接"
+
+msgid "server error ({status})"
+msgstr "服务器错误（{status}）"
+
+msgid "unexpected API response"
+msgstr "API 响应异常"
+
+msgid "the account has no {currency} balance (available: {available})"
+msgstr "账户中没有 {currency} 余额（可用：{available}）"
+
+msgid "cannot save history: {path}"
+msgstr "无法保存历史记录：{path}"
+
+msgid "request cancelled"
+msgstr "请求已取消"
+
+msgid "Notifications"
+msgstr "通知"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Panel"
+msgstr "面板"
+
+msgid "Currency"
+msgstr "币种"
+
+msgid "API key"
+msgstr "API 密钥"
+
+msgid "Notify when the daily limit is exceeded"
+msgstr "超过每日阈值时通知"
+
+msgid "Daily limit"
+msgstr "每日阈值"
+
+msgid "Polling interval, min"
+msgstr "轮询间隔（分钟）"
+
+msgid "Show"
+msgstr "显示"
+
+msgid "Balance and spending"
+msgstr "余额与支出"
+
+msgid "Balance only"
+msgstr "仅余额"
+
+msgid "Spending only"
+msgstr "仅支出"
+
+msgid "Days on the chart"
+msgstr "图表天数"
+
+msgid "Currency code (empty — auto)"
+msgstr "币种代码（留空即自动）"
+
+msgid "Key"
+msgstr "密钥"
+
+msgid "checking…"
+msgstr "正在检查…"
+
+msgid "not set in the keyring or the file"
+msgstr "钥匙环和文件中都未设置"
+
+msgid "{source}: {tail} · sha256 {hash}"
+msgstr "{source}：{tail} · sha256 {hash}"
+
+msgid "sk-…{tail}"
+msgstr "sk-…{tail}"
+
+msgid "Platform token"
+msgstr "平台令牌"
+
+msgid "not set — history comes from local polls only"
+msgstr "未设置 — 历史记录仅来自本地轮询"
+
+msgid "{source}: sha256 {hash}"
+msgstr "{source}：sha256 {hash}"
+
+msgid "Save…"
+msgstr "保存…"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "DeepSeek API key"
+msgstr "DeepSeek API 密钥"
+
+msgid "sk-…"
+msgstr "sk-…"
+
+msgid "Paste the DeepSeek API key; it is stored in the GNOME keyring."
+msgstr "粘贴 DeepSeek API 密钥，它会被保存到 GNOME 钥匙环。"
+
+msgid "Platform web session token"
+msgstr "平台网页会话令牌"
+
+msgid "userToken"
+msgstr "userToken"
+
+msgid ""
+"The private endpoint returns daily costs for past days. The token grants full "
+"access to the account."
+msgstr "私有接口会返回过去几天的每日费用。该令牌可完全访问账户。"
+
+msgid "Invalid format: expected sk-… with at least 16 characters."
+msgstr "格式不正确：应为 sk-… 且至少 16 个字符。"
+
+msgid "Invalid token: expected a string with at least 16 characters."
+msgstr "令牌不正确：应为至少 16 个字符的字符串。"
+
+msgid "Cannot save: {detail}"
+msgstr "无法保存：{detail}"
+
+msgid "Cannot delete: {detail}"
+msgstr "无法删除：{detail}"
+
+msgid ""
+"deepmon-key — DeepSeek API key and platform token\n"
+"\n"
+"  set [--platform] [--stdin]   store the secret in the keyring\n"
+"                               (TTY: hidden input; --stdin: from a pipe)\n"
+"  status                       sources and fingerprints of both secrets\n"
+"  fingerprint [--platform]     print the fingerprint only\n"
+"  delete [--platform]          remove the secret from the keyring\n"
+"  --help                       this help\n"
+"\n"
+"Without --platform the command works with the API key (needed for the balance).\n"
+"With --platform it works with the web session token: it allows importing daily\n"
+"costs from platform.deepseek.com (a private endpoint, not the API key).\n"
+"\n"
+"Exit codes: 0 — success, 2 — bad arguments or format, 3 — keyring error."
+msgstr ""
+"deepmon-key — DeepSeek API 密钥与平台令牌\n"
+"\n"
+"  set [--platform] [--stdin]   保存到钥匙环\n"
+"                               （终端：隐藏输入；--stdin：从管道读取）\n"
+"  status                       显示两个密钥的来源与指纹\n"
+"  fingerprint [--platform]     仅显示指纹\n"
+"  delete [--platform]          从钥匙环中删除\n"
+"  --help                       显示此帮助\n"
+"\n"
+"不带 --platform 时操作 API 密钥（获取余额需要它）。\n"
+"带 --platform 时操作网页会话令牌：可从 platform.deepseek.com 导入每日费用\n"
+"（私有接口，不是 API 密钥）。\n"
+"\n"
+"返回码：0 — 成功，2 — 参数或格式错误，3 — 钥匙环错误。"
+
+msgid "Paste the DeepSeek API key (input hidden): "
+msgstr "请粘贴 DeepSeek API 密钥（输入已隐藏）："
+
+msgid "Paste the platform session token (input hidden): "
+msgstr "请粘贴平台网页会话令牌（输入已隐藏）："
+
+msgid "saved {secret} · sha256 {hash}"
+msgstr "已保存 {secret} · sha256 {hash}"
+
+msgctxt "cli"
+msgid "API key"
+msgstr "API 密钥"
+
+msgid "platform"
+msgstr "平台"
+
+msgid "none ({code})"
+msgstr "无（{code}）"
+
+msgid "no secret provided: use --stdin when input is redirected"
+msgstr "未提供密钥：输入被重定向时请使用 --stdin"
+
+msgid "invalid key format: expected sk-… with at least 16 characters"
+msgstr "密钥格式不正确：应为 sk-… 且至少 16 个字符"
+
+msgid "invalid platform token: expected a string with at least 16 characters"
+msgstr "平台令牌不正确：应为至少 16 个字符的字符串"
+
+msgid "cannot store in the keyring: {detail}"
+msgstr "无法保存到钥匙环：{detail}"
+
+msgid "cannot store in the keyring"
+msgstr "无法保存到钥匙环"
+
+msgid "{name} removed from the keyring; {path} is untouched"
+msgstr "已从钥匙环删除 {name}；{path} 未改动"
+
+msgid "unknown command: {command}"
+msgstr "未知命令：{command}"
+
+msgid "deepmon extension directory not found"
+msgstr "未找到 deepmon 扩展目录"
+
+msgid "cannot disable terminal echo; use --stdin"
+msgstr "无法关闭终端回显；请使用 --stdin"
+
+msgid "key"
+msgstr "密钥"
+
+msgid "platform token"
+msgstr "平台令牌"
+
+msgid "…{tail}"
+msgstr "…{tail}"
+
+msgid "~/.config/deepmon/{file}"
+msgstr "~/.config/deepmon/{file}"

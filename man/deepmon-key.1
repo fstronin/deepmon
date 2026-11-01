@@ -1,45 +1,56 @@
-.TH DEEPMON-KEY 1 "2026-11-01" "deepmon 1.0.0" "Пользовательские команды"
+.TH DEEPMON-KEY 1 "2026-11-01" "deepmon 1.0.10" "User commands"
 .SH NAME
-deepmon-key \- управление ключом DeepSeek API в связке ключей GNOME
+deepmon-key \- manage the DeepSeek API key and the platform session token
 .SH SYNOPSIS
 .B deepmon-key
-.I команда
+.I command
+.RB [ \-\-platform ]
 .RB [ \-\-stdin ]
 .SH DESCRIPTION
-Хранит ключ DeepSeek API в GNOME Keyring (атрибуты application=deepmon,
-account=deepseek-api). Расширение deepmon читает его оттуда; резервный источник —
-файл ~/.config/deepmon/key с правами 0600.
+Secrets are stored in the GNOME keyring. The API key is kept with the attributes
+application=deepmon, account=deepseek-api; the platform web session token with
+account=deepseek-platform. The extension reads them from there. The fallback for
+the API key is the file ~/.config/deepmon/key with mode 0600.
 .PP
-Ключ читается со стандартного ввода без эха и не передаётся аргументом командной
-строки, поэтому не попадает в историю оболочки и в список процессов.
+A secret is read from standard input without echo and never passed as a command
+line argument, so it does not appear in shell history or in the process list.
 .SH COMMANDS
 .TP
-.B set [--stdin]
-Сохранить ключ в связке. В терминале ввод скрыт; при перенаправлении ввода
-обязателен флаг \fB--stdin\fR.
+.B set [--platform] [--stdin]
+Store the secret in the keyring. In a terminal the input is hidden; when input is
+redirected, the \fB--stdin\fR flag is required.
 .TP
 .B status
-Показать источник ключа (keyring или file) и отпечаток sha256.
+Show the source (keyring or file) and the sha256 fingerprint of both secrets.
 .TP
-.B fingerprint
-Напечатать только отпечаток ключа.
+.B fingerprint [--platform]
+Print the fingerprint only.
 .TP
-.B delete
-Удалить ключ из связки. Файл ~/.config/deepmon/key не изменяется.
+.B delete [--platform]
+Remove the secret from the keyring. Files under ~/.config/deepmon are not touched.
+.SH OPTIONS
+.TP
+.B --platform
+Operate on the platform web session token instead of the API key. The token
+allows importing daily costs from platform.deepseek.com through a private
+endpoint; it grants full access to the account.
+.TP
+.B --stdin
+Read the secret from standard input instead of prompting.
 .SH EXIT STATUS
 .TP
 .B 0
-Успех.
+Success.
 .TP
 .B 2
-Неверные аргументы или формат ключа.
+Bad arguments, invalid key or token format.
 .TP
 .B 3
-Ошибка связки ключей или невозможность отключить эхо терминала (тогда используйте
-\fB--stdin\fR).
+Keyring error, or the terminal echo could not be disabled (use \fB--stdin\fR).
 .SH EXAMPLE
 .nf
   deepmon-key set
+  deepmon-key set --platform
   deepmon-key status
   pass show deepseek | deepmon-key set --stdin
 .fi

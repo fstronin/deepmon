@@ -1,0 +1,316 @@
+# Русский перевод расширения deepmon.
+# msgid — английский текст из src/deepmon@fstronin/strings.js.
+msgid ""
+msgstr ""
+"Project-Id-Version: deepmon 1.0.10\n"
+"Report-Msgid-Bugs-To: fstronin <fstronin@localhost>\n"
+"POT-Creation-Date: 2026-11-01 04:40+0000\n"
+"PO-Revision-Date: 2026-11-01 04:40+0000\n"
+"Last-Translator: fstronin <fstronin@localhost>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+
+msgid "↓"
+msgstr "↓"
+
+msgid "⚠"
+msgstr "⚠"
+
+msgid "DeepSeek ⚠"
+msgstr "DeepSeek ⚠"
+
+msgid "DeepSeek API"
+msgstr "DeepSeek API"
+
+msgid "Refresh now"
+msgstr "Обновить сейчас"
+
+msgid "platform.deepseek.com"
+msgstr "platform.deepseek.com"
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Today"
+msgstr "Сегодня"
+
+msgid "7 days"
+msgstr "7 дней"
+
+msgid "30 days"
+msgstr "30 дней"
+
+msgid "balance exhausted or unavailable"
+msgstr "баланс исчерпан или недоступен"
+
+msgid "data: {days} of 30"
+msgstr "данных: {days} из 30"
+
+msgid "{spent} / {limit}"
+msgstr "{spent} / {limit}"
+
+msgid "≈"
+msgstr "≈"
+
+msgid "day"
+msgid_plural "days"
+msgstr[0] "день"
+msgstr[1] "дня"
+msgstr[2] "дней"
+
+msgid "DeepSeek: spending"
+msgstr "DeepSeek: расходы"
+
+msgid "Today {spend} — above the limit {limit}"
+msgstr "Сегодня {spend} — выше порога {limit}"
+
+msgid "DeepSeek: platform token"
+msgstr "DeepSeek: токен платформы"
+
+msgid "platform token expired — renew with: deepmon-key set --platform"
+msgstr "токен платформы истёк — обновите: deepmon-key set --platform"
+
+msgid "platform history: {code}"
+msgstr "история платформы: {code}"
+
+msgid "currency changed: history for {currency} moved to the archive"
+msgstr "валюта изменена: история по {currency} отложена в архив"
+
+msgid "no API key: deepmon-key set"
+msgstr "ключ не задан: deepmon-key set"
+
+msgid "key file permissions are wider than 0600: chmod 600 {path}"
+msgstr "права файла ключа шире 0600: chmod 600 {path}"
+
+msgid "keyring is locked: open Passwords and Keys"
+msgstr "связка ключей заблокирована: откройте «Пароли и ключи»"
+
+msgid "key rejected ({status})"
+msgstr "ключ отклонён ({status})"
+
+msgid "rate limited, try again later"
+msgstr "лимит запросов, повтор позже"
+
+msgid "no connection since {time}"
+msgstr "нет связи с {time}"
+
+msgid "server error ({status})"
+msgstr "ошибка сервера ({status})"
+
+msgid "unexpected API response"
+msgstr "неожиданный ответ API"
+
+msgid "the account has no {currency} balance (available: {available})"
+msgstr "валюта {currency} не входит в ответ (есть: {available})"
+
+msgid "cannot save history: {path}"
+msgstr "не удалось сохранить историю: {path}"
+
+msgid "request cancelled"
+msgstr "запрос отменён"
+
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgid "Refresh"
+msgstr "Обновление"
+
+msgid "Panel"
+msgstr "Панель"
+
+msgid "Currency"
+msgstr "Валюта"
+
+msgid "API key"
+msgstr "Ключ API"
+
+msgid "Notify when the daily limit is exceeded"
+msgstr "Оповещать о превышении дневного порога"
+
+msgid "Daily limit"
+msgstr "Порог в день"
+
+msgid "Polling interval, min"
+msgstr "Интервал опроса, мин"
+
+msgid "Show"
+msgstr "Показывать"
+
+msgid "Balance and spending"
+msgstr "Баланс и трата"
+
+msgid "Balance only"
+msgstr "Только баланс"
+
+msgid "Spending only"
+msgstr "Только трата"
+
+msgid "Days on the chart"
+msgstr "Дней на графике"
+
+msgid "Currency code (empty — auto)"
+msgstr "Код валюты (пусто — авто)"
+
+msgid "Key"
+msgstr "Ключ"
+
+msgid "checking…"
+msgstr "проверяю…"
+
+msgid "not set in the keyring or the file"
+msgstr "не задан ни в связке ключей, ни в файле"
+
+msgid "{source}: {tail} · sha256 {hash}"
+msgstr "{source}: {tail} · sha256 {hash}"
+
+msgid "sk-…{tail}"
+msgstr "sk-…{tail}"
+
+msgid "Platform token"
+msgstr "Токен платформы"
+
+msgid "not set — history comes from local polls only"
+msgstr "не задан — история только по локальным опросам"
+
+msgid "{source}: sha256 {hash}"
+msgstr "{source}: sha256 {hash}"
+
+msgid "Save…"
+msgstr "Сохранить…"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "DeepSeek API key"
+msgstr "Ключ DeepSeek API"
+
+msgid "sk-…"
+msgstr "sk-…"
+
+msgid "Paste the DeepSeek API key; it is stored in the GNOME keyring."
+msgstr "Вставьте ключ DeepSeek API, он сохранится в связке ключей GNOME."
+
+msgid "Platform web session token"
+msgstr "Токен веб-сессии платформы"
+
+msgid "userToken"
+msgstr "userToken"
+
+msgid ""
+"The private endpoint returns daily costs for past days. The token grants full "
+"access to the account."
+msgstr ""
+"Приватный эндпоинт даёт дневные расходы за прошлые дни. Токен — это доступ ко "
+"всему аккаунту."
+
+msgid "Invalid format: expected sk-… with at least 16 characters."
+msgstr "Неверный формат: ожидается sk-… длиной от 16 символов."
+
+msgid "Invalid token: expected a string with at least 16 characters."
+msgstr "Неверный токен: ожидается строка от 16 символов."
+
+msgid "Cannot save: {detail}"
+msgstr "Не удалось сохранить: {detail}"
+
+msgid "Cannot delete: {detail}"
+msgstr "Не удалось удалить: {detail}"
+
+msgid ""
+"deepmon-key — DeepSeek API key and platform token\n"
+"\n"
+"  set [--platform] [--stdin]   store the secret in the keyring\n"
+"                               (TTY: hidden input; --stdin: from a pipe)\n"
+"  status                       sources and fingerprints of both secrets\n"
+"  fingerprint [--platform]     print the fingerprint only\n"
+"  delete [--platform]          remove the secret from the keyring\n"
+"  --help                       this help\n"
+"\n"
+"Without --platform the command works with the API key (needed for the balance).\n"
+"With --platform it works with the web session token: it allows importing daily\n"
+"costs from platform.deepseek.com (a private endpoint, not the API key).\n"
+"\n"
+"Exit codes: 0 — success, 2 — bad arguments or format, 3 — keyring error."
+msgstr ""
+"deepmon-key — ключ DeepSeek API и токен платформы\n"
+"\n"
+"  set [--platform] [--stdin]   сохранить секрет в связке\n"
+"                               (TTY: ввод без эха; --stdin: из пайпа)\n"
+"  status                       источники и отпечатки обоих секретов\n"
+"  fingerprint [--platform]     только отпечаток\n"
+"  delete [--platform]          удалить секрет из связки\n"
+"  --help                       эта справка\n"
+"\n"
+"Без --platform работаем с ключом API (он нужен для баланса).\n"
+"С --platform — с токеном веб-сессии: он позволяет подтянуть дневные расходы\n"
+"с platform.deepseek.com (приватный эндпоинт, не ключ API).\n"
+"\n"
+"Коды возврата: 0 — успех, 2 — неверные аргументы или формат, 3 — ошибка связки."
+
+msgid "Paste the DeepSeek API key (input hidden): "
+msgstr "Вставьте ключ DeepSeek (ввод скрыт): "
+
+msgid "Paste the platform session token (input hidden): "
+msgstr "Вставьте токен веб-сессии platform.deepseek.com (ввод скрыт): "
+
+msgid "saved {secret} · sha256 {hash}"
+msgstr "сохранён {secret} · sha256 {hash}"
+
+msgctxt "cli"
+msgid "API key"
+msgstr "ключ API"
+
+msgid "platform"
+msgstr "платформа"
+
+msgid "none ({code})"
+msgstr "нет ({code})"
+
+msgid "no secret provided: use --stdin when input is redirected"
+msgstr "секрет не передан: используйте --stdin при перенаправлении ввода"
+
+msgid "invalid key format: expected sk-… with at least 16 characters"
+msgstr "неверный формат ключа: ожидается sk-… длиной от 16 символов"
+
+msgid "invalid platform token: expected a string with at least 16 characters"
+msgstr "неверный токен платформы: ожидается строка от 16 символов"
+
+msgid "cannot store in the keyring: {detail}"
+msgstr "не удалось сохранить в связке: {detail}"
+
+msgid "cannot store in the keyring"
+msgstr "не удалось сохранить в связке ключей"
+
+msgid "{name} removed from the keyring; {path} is untouched"
+msgstr "{name} удалён из связки; {path} не тронут"
+
+msgid "unknown command: {command}"
+msgstr "неизвестная команда: {command}"
+
+msgid "deepmon extension directory not found"
+msgstr "не найден каталог расширения deepmon"
+
+msgid "cannot disable terminal echo; use --stdin"
+msgstr "не удалось отключить эхо терминала; используйте --stdin"
+
+msgid "key"
+msgstr "ключ"
+
+msgid "platform token"
+msgstr "токен платформы"
+
+msgid "…{tail}"
+msgstr "…{tail}"
+
+msgid "~/.config/deepmon/{file}"
+msgstr "~/.config/deepmon/{file}"

@@ -1,6 +1,6 @@
 #!/usr/bin/gjs -m
 // deepmon-key — управление ключом DeepSeek API и токеном веб-сессии платформы.
-// Секрет читается из stdin (без эха в TTY), никогда не попадает в argv и в вывод.
+// Сообщения берутся из каталога переводов расширения (po/ → locale/*.mo).
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Secret from 'gi://Secret';
@@ -8,42 +8,52 @@ import system from 'system';
 
 const KEY_RE = /^sk-[A-Za-z0-9_-]{16,}$/;
 const TOKEN_RE = /^[A-Za-z0-9._-]{16,}$/;
-const KEY_TARGET = {
-    attributes: {application: 'deepmon', account: 'deepseek-api'},
-    label: 'DeepSeek API key',
-    fileName: 'key',
-    pattern: KEY_RE,
-    prompt: 'Вставьте ключ DeepSeek (ввод скрыт): ',
-    printed: value => `sk-…${value.slice(-4)}`,
-};
-const PLATFORM_TARGET = {
-    attributes: {application: 'deepmon', account: 'deepseek-platform'},
-    label: 'DeepSeek platform session token',
-    fileName: 'platform-token',
-    pattern: TOKEN_RE,
-    prompt: 'Вставьте токен веб-сессии platform.deepseek.com (ввод скрыт): ',
-    printed: value => `…${value.slice(-6)}`,
-};
-const USAGE = `deepmon-key — ключ DeepSeek API и токен платформы
+const KEY_TARGET = {kind: 'key', attributes: {application: 'deepmon', account: 'deepseek-api'},
+    label: 'DeepSeek API key', fileName: 'key', pattern: KEY_RE};
+const PLATFORM_TARGET = {kind: 'platform', attributes: {application: 'deepmon', account: 'deepseek-platform'},
+    label: 'DeepSeek platform session token', fileName: 'platform-token', pattern: TOKEN_RE};
 
-  set [--platform] [--stdin]   сохранить секрет в связке
-                               (TTY: ввод без эха; --stdin: из пайпа)
-  status                       источники и отпечатки обоих секретов
-  fingerprint [--platform]     только отпечаток
-  delete [--platform]          удалить секрет из связки
-  --help                       эта справка
+let cached = null;
 
-Без --platform работаем с ключом API (он нужен для баланса).
-С --platform — с токеном веб-сессии: он позволяет подтянуть дневные расходы
-с platform.deepseek.com (приватный эндпоинт, не ключ API).
+function extensionDir() {
+    const script = Gio.File.new_for_uri(import.meta.url).get_path();
+    // Порядок: пользовательская копия, затем дерево исходников рядом со скриптом
+    // (dev-запуск из репозитория), затем системная установка.
+    const candidates = [
+        GLib.build_filenamev([GLib.get_user_data_dir(), 'gnome-shell', 'extensions', 'deepmon@fstronin']),
+        GLib.build_filenamev([GLib.path_get_dirname(GLib.path_get_dirname(script)), 'src', 'deepmon@fstronin']),
+        '/usr/share/gnome-shell/extensions/deepmon@fstronin',
+    ];
+    for (const candidate of candidates) {
+        if (Gio.File.new_for_path(GLib.build_filenamev([candidate, 'strings.js'])).query_exists(null))
+            return candidate;
+    }
+    return null;
+}
 
-Коды возврата: 0 — успех, 2 — неверные аргументы или формат, 3 — ошибка связки.`;
-
-function schema() {
-    return Secret.Schema.new('org.freedesktop.Secret.Generic', Secret.SchemaFlags.NONE, {
-        application: Secret.SchemaAttributeType.STRING,
-        account: Secret.SchemaAttributeType.STRING,
-    });
+async function modules() {
+    if (cached)
+        return cached;
+    const dir = extensionDir();
+    if (!dir) {
+        printerr('deepmon extension directory not found');
+        system.exit(3);
+    }
+    const load = name => import(Gio.File.new_for_path(GLib.build_filenamev([dir, name])).get_uri());
+    const [strings, keyReader, fileReader, keyringReader] = await Promise.all([
+        load('strings.js'),
+        load('storage/KeyReader.js'),
+        load('storage/FileKeyReader.js'),
+        load('storage/KeyringKeyReader.js'),
+    ]);
+    cached = {
+        S: strings.S,
+        fingerprint: keyReader.fingerprint,
+        KeyReader: keyReader.KeyReader,
+        FileKeyReader: fileReader.FileKeyReader,
+        KeyringKeyReader: keyringReader.KeyringKeyReader,
+    };
+    return cached;
 }
 
 function die(message, code) {
@@ -51,32 +61,11 @@ function die(message, code) {
     system.exit(code);
 }
 
-function extensionDir() {
-    const candidates = [
-        GLib.build_filenamev([GLib.get_user_data_dir(), 'gnome-shell', 'extensions', 'deepmon@fstronin']),
-        '/usr/share/gnome-shell/extensions/deepmon@fstronin',
-    ];
-    const script = Gio.File.new_for_uri(import.meta.url).get_path();
-    candidates.push(GLib.build_filenamev([GLib.path_get_dirname(GLib.path_get_dirname(script)), 'src', 'deepmon@fstronin']));
-    for (const candidate of candidates) {
-        if (Gio.File.new_for_path(GLib.build_filenamev([candidate, 'storage', 'KeyReader.js'])).query_exists(null))
-            return candidate;
-    }
-    die('не найден каталог расширения deepmon', 3);
-}
-
-async function storage() {
-    const dir = extensionDir();
-    const load = name => import(Gio.File.new_for_path(GLib.build_filenamev([dir, 'storage', name])).get_uri());
-    const keyReaderModule = await load('KeyReader.js');
-    const fileModule = await load('FileKeyReader.js');
-    const keyringModule = await load('KeyringKeyReader.js');
-    return {
-        fingerprint: keyReaderModule.fingerprint,
-        KeyReader: keyReaderModule.KeyReader,
-        FileKeyReader: fileModule.FileKeyReader,
-        KeyringKeyReader: keyringModule.KeyringKeyReader,
-    };
+function schema() {
+    return Secret.Schema.new('org.freedesktop.Secret.Generic', Secret.SchemaFlags.NONE, {
+        application: Secret.SchemaAttributeType.STRING,
+        account: Secret.SchemaAttributeType.STRING,
+    });
 }
 
 function stdinIsTty() {
@@ -103,8 +92,7 @@ function stdinTerminal() {
 }
 
 // SubprocessLauncher отдаёт ребёнку stdin, а не терминал (ioctl на нём не работает),
-// поэтому устройство передаётся явно через -F. Возвращаем успех: без отключения эха
-// читать секрет нельзя.
+// поэтому устройство передаётся явно через -F.
 function stty(args) {
     const device = stdinTerminal();
     if (!device)
@@ -124,11 +112,11 @@ function readAll() {
     return new TextDecoder().decode(bytes);
 }
 
-function readLineWithEchoOff(prompt) {
+function readLineWithEchoOff(prompt, echoFailed) {
     const channel = GLib.IOChannel.unix_new(0);
     printerr(prompt);
     if (!stty(['-echo']))
-        die('не удалось отключить эхо терминала; используйте --stdin', 3);
+        die(echoFailed, 3);
     try {
         const [status, line] = channel.read_line();
         return status === GLib.IOStatus.NORMAL ? line : '';
@@ -151,8 +139,19 @@ function targetFor(args) {
     return args.includes('--platform') ? PLATFORM_TARGET : KEY_TARGET;
 }
 
+function secretsOf(S, target) {
+    const platform = target === PLATFORM_TARGET;
+    return {
+        name: platform ? S.cli.namePlatform : S.cli.nameKey,
+        prompt: platform ? S.cli.promptPlatform : S.cli.promptKey,
+        status: platform ? S.cli.statusPlatform : S.cli.statusApiKey,
+        printed: value => (platform ? S.cli.tailPlatform : S.cli.tailKey).replace('{tail}', value.slice(-4)),
+        invalid: platform ? S.cli.invalidToken : S.cli.invalidKey,
+    };
+}
+
 async function resolveSecret(target) {
-    const {KeyReader, FileKeyReader, KeyringKeyReader} = await storage();
+    const {KeyReader, FileKeyReader, KeyringKeyReader} = await modules();
     return new KeyReader({
         keyring: new KeyringKeyReader({attributes: target.attributes}),
         file: new FileKeyReader({
@@ -164,66 +163,71 @@ async function resolveSecret(target) {
 }
 
 async function commandSet(args) {
+    const {S, fingerprint} = await modules();
     const target = targetFor(args);
+    const secrets = secretsOf(S, target);
     const useStdin = args.includes('--stdin');
-    if (!useStdin && !stdinIsTty())
-        die('секрет не передан: используйте --stdin при перенаправлении ввода', 2);
 
-    const raw = useStdin ? readAll() : readLineWithEchoOff(target.prompt);
+    if (!useStdin && !stdinIsTty())
+        die(S.cli.missingInput, 2);
+
+    const raw = useStdin ? readAll() : readLineWithEchoOff(secrets.prompt, S.cli.echoFailed);
     const value = normalize(raw);
     if (!target.pattern.test(value))
-        die(target === PLATFORM_TARGET
-            ? 'неверный токен платформы: ожидается строка от 16 символов'
-            : 'неверный формат ключа: ожидается sk-… длиной от 16 символов', 2);
+        die(secrets.invalid, 2);
 
     let stored;
     try {
         stored = Secret.password_store_sync(schema(), target.attributes, Secret.COLLECTION_DEFAULT,
             target.label, value, null);
     } catch (error) {
-        die(`не удалось сохранить в связке: ${error.message}`, 3);
+        die(S.cli.storeFailed.replace('{detail}', error.message), 3);
     }
     if (!stored)
-        die('не удалось сохранить в связке ключей', 3);
+        die(S.cli.storeFailedShort, 3);
 
-    const {fingerprint} = await storage();
-    print(`сохранён ${target.printed(value)} · sha256 ${fingerprint(value)}`);
+    print(S.cli.saved
+        .replace('{secret}', secrets.printed(value))
+        .replace('{hash}', fingerprint(value)));
 }
 
 async function commandStatus() {
-    const {fingerprint} = await storage();
+    const {S, fingerprint} = await modules();
     for (const target of [KEY_TARGET, PLATFORM_TARGET]) {
-        const name = target === PLATFORM_TARGET ? 'платформа' : 'ключ API';
+        const secrets = secretsOf(S, target);
         const result = await resolveSecret(target);
         if (!result.ok) {
-            print(`${name}: нет (${result.code})`);
+            print(`${secrets.status}: ${S.cli.none.replace('{code}', result.code)}`);
             continue;
         }
-        const path = result.source === 'file'
+        const source = result.source === 'file'
             ? GLib.build_filenamev([GLib.get_user_config_dir(), 'deepmon', target.fileName])
             : 'keyring';
-        print(`${name}: ${path}, ${target.printed(result.key)} · sha256 ${fingerprint(result.key)}`);
+        print(`${secrets.status}: ${source}, ${secrets.printed(result.key)} · sha256 ${fingerprint(result.key)}`);
     }
 }
 
 async function commandFingerprint(args) {
+    const {S, fingerprint} = await modules();
     const target = targetFor(args);
     const result = await resolveSecret(target);
     if (!result.ok)
-        die(`секрета нет (${result.code})`, 3);
-    const {fingerprint} = await storage();
+        die(S.cli.none.replace('{code}', result.code), 3);
     print(fingerprint(result.key));
 }
 
-function commandDelete(args) {
+async function commandDelete(args) {
+    const {S} = await modules();
     const target = targetFor(args);
+    const secrets = secretsOf(S, target);
     try {
         Secret.password_clear_sync(schema(), target.attributes, null);
     } catch (error) {
-        die(`не удалось удалить из связки: ${error.message}`, 3);
+        die(S.cli.storeFailed.replace('{detail}', error.message), 3);
     }
-    const name = target === PLATFORM_TARGET ? 'токен платформы' : 'ключ';
-    print(`${name} удалён из связки; файл ~/.config/deepmon/${target.fileName} не тронут`);
+    print(S.cli.deleted
+        .replace('{name}', secrets.name)
+        .replace('{path}', S.cli.deletedPath.replace('{file}', target.fileName)));
 }
 
 const [command, ...args] = ARGV;
@@ -239,13 +243,17 @@ case 'fingerprint':
     await commandFingerprint(args);
     break;
 case 'delete':
-    commandDelete(args);
+    await commandDelete(args);
     break;
 case '--help':
 case '-h':
-case undefined:
-    print(USAGE);
+case undefined: {
+    const {S} = await modules();
+    print(S.cli.usage);
     break;
-default:
-    die(`неизвестная команда: ${command}\n\n${USAGE}`, 2);
+}
+default: {
+    const {S} = await modules();
+    die(S.cli.unknownCommand.replace('{command}', command), 2);
+}
 }

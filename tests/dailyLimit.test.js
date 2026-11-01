@@ -13,7 +13,7 @@ export const tests = [
     {name: 'новый день -> да', fn: t => t.eq(evaluate({summary: sum(200), limitCents: 100, enabled: true, alerts: {'2026-10-31': {limit: 100, spend: 143}}, date: '2026-11-01'}).fire, true)},
     {name: 'alertText', fn: t => {
         const a = alertText({spend: 143, limit: 100, currency: 'CNY'});
-        t.eq(a.title, 'DeepSeek: расходы');
-        t.eq(a.body, 'Сегодня ¥1.43 — выше порога ¥1.00');
+        t.eq(a.title, 'DeepSeek: spending');
+        t.eq(a.body, 'Today ¥1.43 — above the limit ¥1.00');
     }},
 ];

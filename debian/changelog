@@ -1,3 +1,13 @@
+gnome-shell-extension-deepmon (1.0.10) unstable; urgency=medium
+
+  * Localization via gettext: English msgids in strings.js, po/ru.po and
+    po/zh_CN.po compiled to locale/<lang>/LC_MESSAGES/deepmon.mo, shipped
+    with the package; the panel, popup, notifications, prefs, CLI and
+    manpage follow the session locale. Tests cover catalog completeness
+    and per-locale rendering.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 04:50:00 +0000
+
 gnome-shell-extension-deepmon (1.0.9) unstable; urgency=medium
 
   * Header: balance and spend/limit ratio now share one row and both are

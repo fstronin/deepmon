@@ -21,7 +21,7 @@ export const tests = [
         t.eq(result.notified, true);
         t.eq(input.state.alerts['2026-11-01'].limit, 100);
         t.eq(calls.length, 1);
-        t.eq(calls[0].title, 'DeepSeek: расходы');
+        t.eq(calls[0].title, 'DeepSeek: spending');
     }},
     {name: 'не сохранилось: уведомления нет', fn: t => {
         let notified = 0;

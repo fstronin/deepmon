@@ -5,6 +5,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import system from 'system';
+// Язык тестов фиксируется окружением (LANGUAGE=en в Makefile).
 
 const selfFile = Gio.File.new_for_uri(import.meta.url);
 const testDir = GLib.path_get_dirname(selfFile.get_path());

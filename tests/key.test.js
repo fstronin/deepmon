@@ -56,4 +56,17 @@ export const tests = [
         t.eq(fingerprint(KEY), a);
         t.ok(a !== fingerprint(`${KEY}x`), 'разные ключи');
     }},
+    {name: 'зависшая связка не блокирует файл', fn: async t => {
+        const keyring = {readKey: () => new Promise(() => {})};
+        const file = new FileKeyReader({path: writeKeyFile(KEY, 0o600)});
+        const r = await new KeyReader({keyring, file, keyringTimeoutMs: 50}).readKey();
+        t.eq(r.source, 'file');
+        t.eq(r.key, KEY);
+    }},
+    {name: 'зависшая связка без файла -> keyring-locked', fn: async t => {
+        const keyring = {readKey: () => new Promise(() => {})};
+        const file = {readKey: async () => ({ok: false, code: 'no-key'})};
+        const r = await new KeyReader({keyring, file, keyringTimeoutMs: 50}).readKey();
+        t.eq(r.code, 'keyring-locked');
+    }},
 ];

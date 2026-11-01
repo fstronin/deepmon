@@ -14,3 +14,6 @@ clean:
 
 verify-ui:
 	bash tests/headless.sh
+verify-e2e:
+	DEEPMON_MODE=e2e bash tests/headless.sh
+.PHONY: verify-e2e

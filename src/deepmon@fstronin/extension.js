@@ -1,58 +1,190 @@
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Config} from './config/Config.js';
+import {SoupBalanceSource} from './balance/SoupBalanceSource.js';
+import {JsonSpendingStore} from './spending/JsonSpendingStore.js';
+import {RefreshSpending} from './spending/RefreshSpending.js';
+import {localDate} from './spending/History.js';
+import {KeyReader} from './storage/KeyReader.js';
+import {KeyringKeyReader} from './storage/KeyringKeyReader.js';
+import {FileKeyReader} from './storage/FileKeyReader.js';
+import {evaluate, alertText} from './alerting/DailyLimit.js';
+import {ShellNotifier} from './alerting/ShellNotifier.js';
 import {Indicator} from './panel/Indicator.js';
 import {buildViewModel} from './panel/format.js';
 
 const UUID = 'deepmon@fstronin';
-
-// Временная сборка для headless-проверки UI: сеть и настройки подключаются в Task 15.
-function staticSummary() {
-    const now = Math.floor(Date.now() / 1000);
-    const chart = [];
-    const date = new Date();
-    const days = [];
-    for (let back = 13; back >= 0; back--) {
-        const day = new Date(date.getTime());
-        day.setDate(day.getDate() - back);
-        days.push(day);
-    }
-    days.forEach((day, index) => {
-        chart.push({
-            date: `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`,
-            spend: index === days.length - 1 ? 62 : 0,
-            approx: false,
-            hasData: true,
-        });
-    });
-    return {
-        currency: 'CNY',
-        isAvailable: true,
-        updatedAt: now,
-        balances: [{currency: 'CNY', total: 11840, granted: 0, toppedUp: 11840}],
-        today: {spend: 62, approx: false, coveredFrom: now, hasData: true},
-        week: {spend: 410, daysWithData: 7},
-        month: {spend: 1785, daysWithData: 14},
-        chart,
-    };
-}
+const PLATFORM_URL = 'https://platform.deepseek.com';
+const FORCE_REFRESH_AFTER_SECONDS = 60;
 
 export default class DeepmonExtension extends Extension {
     enable() {
+        this._settings = this.getSettings();
+        this._config = new Config(this._settings);
+        this._store = new JsonSpendingStore({
+            path: GLib.build_filenamev([GLib.get_user_state_dir(), 'deepmon', 'history.json']),
+        });
+        this._source = new SoupBalanceSource({baseUrl: this._config.apiBaseUrl});
+        this._keyReader = new KeyReader({
+            keyring: new KeyringKeyReader(),
+            file: new FileKeyReader({path: this._config.keyFilePath}),
+        });
+        this._refreshUnit = new RefreshSpending({
+            source: this._source,
+            store: this._store,
+            keyReader: this._keyReader,
+            config: this._config,
+        });
+        this._notifier = new ShellNotifier();
+        this._cancellable = new Gio.Cancellable();
+        this._refreshing = false;
+        this._timerId = null;
+        this._timerMinutes = null;
+        this._lastSuccessAt = null;
+        this._lastSummary = null;
+        this._lastNotice = null;
+        this._lastError = null;
+
         this._indicator = new Indicator({
-            onRefresh: () => Promise.resolve(),
+            onRefresh: () => this._requestRefresh({force: true}),
             onOpenPrefs: () => this.openPreferences(),
-            onOpenPlatform: () => {},
+            onOpenPlatform: () => Gio.AppInfo.launch_default_for_uri(PLATFORM_URL, null),
         });
         Main.panel.addToStatusArea(UUID, this._indicator);
-        this._indicator.setState(buildViewModel({
-            summary: staticSummary(),
-            panelMode: 'both',
-            limitCents: 100,
+
+        this._render(buildViewModel({
+            summary: null,
+            panelMode: this._config.panelMode,
+            limitCents: this._config.dailyLimitCents,
         }));
+
+        this._settingsId = this._config.connect(() => this._onSettingsChanged());
+        this._armTimer(this._config.refreshMinutes);
+        this._requestRefresh({force: true});
     }
 
     disable() {
+        this._disarmTimer();
+        if (this._settingsId !== undefined && this._config) {
+            this._config.destroy();
+            this._settingsId = undefined;
+        }
+        this._cancellable?.cancel();
         this._indicator?.destroy();
         this._indicator = null;
+        this._refreshUnit = null;
+        this._store = null;
+        this._source = null;
+        this._keyReader = null;
+        this._notifier = null;
+        this._cancellable = null;
+        this._config = null;
+        this._settings = null;
+        this._lastSummary = null;
+        this._lastNotice = null;
+        this._lastError = null;
+    }
+
+    _requestRefresh({force = false} = {}) {
+        const now = Math.floor(Date.now() / 1000);
+        if (!force && this._lastSuccessAt !== null && now - this._lastSuccessAt < FORCE_REFRESH_AFTER_SECONDS)
+            return Promise.resolve();
+        return this._refresh();
+    }
+
+    async _refresh() {
+        if (this._refreshing || !this._refreshUnit)
+            return;
+        this._refreshing = true;
+        try {
+            const result = await this._refreshUnit.run({cancellable: this._cancellable});
+            if (result.skipped)
+                return;
+
+            this._lastSummary = result.summary;
+            this._lastNotice = result.notice;
+            this._lastError = result.error;
+            if (result.summary?.updatedAt)
+                this._lastSuccessAt = result.summary.updatedAt;
+
+            this._render(this._viewModel());
+            this._handleLimit(result);
+        } catch (error) {
+            logError(error, `[${UUID}] refresh`);
+        } finally {
+            this._refreshing = false;
+        }
+    }
+
+    _viewModel() {
+        return buildViewModel({
+            summary: this._lastSummary,
+            notice: this._lastNotice,
+            error: this._lastError,
+            panelMode: this._config?.panelMode ?? 'both',
+            limitCents: this._config?.dailyLimitCents ?? 0,
+        });
+    }
+
+    _render(view) {
+        this._indicator?.setState(view);
+    }
+
+    _handleLimit({summary, state}) {
+        if (!summary || !state)
+            return;
+        const date = localDate(Math.floor(Date.now() / 1000));
+        const decision = evaluate({
+            summary,
+            limitCents: this._config.dailyLimitCents,
+            enabled: this._config.alertsEnabled,
+            alerts: state.alerts,
+            date,
+        });
+        if (!decision.fire)
+            return;
+
+        state.alerts[date] = {limit: decision.limit, spend: decision.spend};
+        this._store.save(state);
+        this._notifier.notify(alertText({
+            spend: decision.spend,
+            limit: decision.limit,
+            currency: summary.currency,
+        }));
+    }
+
+    _onSettingsChanged() {
+        if (!this._config)
+            return;
+        const minutes = this._config.refreshMinutes;
+        if (minutes !== this._timerMinutes)
+            this._armTimer(minutes);
+        this._source = new SoupBalanceSource({baseUrl: this._config.apiBaseUrl});
+        this._refreshUnit = new RefreshSpending({
+            source: this._source,
+            store: this._store,
+            keyReader: this._keyReader,
+            config: this._config,
+        });
+        this._render(this._viewModel());
+    }
+
+    _armTimer(minutes) {
+        this._disarmTimer();
+        this._timerMinutes = minutes;
+        this._timerId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, minutes * 60, () => {
+            this._requestRefresh();
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+
+    _disarmTimer() {
+        if (this._timerId !== null) {
+            GLib.source_remove(this._timerId);
+            this._timerId = null;
+        }
+        this._timerMinutes = null;
     }
 }

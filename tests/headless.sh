@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# Headless-проверка расширения: поднимает отдельный gnome-shell с probe-расширением,
-# которое включает deepmon, читает реальные акторы и пишет JSON-отчёт.
+# Headless-проверка расширения: отдельный gnome-shell с probe-расширением включает
+# deepmon, читает реальные акторы и пишет JSON-отчёт.
+# DEEPMON_MODE=e2e дополнительно поднимает mock-сервер, кладёт ключ и настраивает схему.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+MODE=${DEEPMON_MODE:-static}
 WORK=$(mktemp -d /tmp/deepmon-headless-XXXXXX)
 SHELL_LOG="$WORK/shell.log"
 REPORT="$WORK/report.json"
-trap 'rm -rf "$WORK"' EXIT
+MOCK_PID=""
+
+cleanup() {
+    [ -n "$MOCK_PID" ] && kill "$MOCK_PID" 2>/dev/null || true
+    rm -rf "$WORK"
+}
+trap cleanup EXIT
 
 export HOME="$WORK/home"
 export XDG_DATA_HOME="$WORK/data"
@@ -20,13 +28,36 @@ mkdir -p "$HOME" "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_CONFIG_HOME" "$XD
 cp -a "$ROOT/src/deepmon@fstronin" "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin"
 glib-compile-schemas "$XDG_DATA_HOME/gnome-shell/extensions/deepmon@fstronin/schemas"
 
+SCHEMA_DIR="$WORK/schemas"
+mkdir -p "$SCHEMA_DIR"
+cp "$ROOT/src/deepmon@fstronin/schemas/org.gnome.shell.extensions.deepmon.gschema.xml" "$SCHEMA_DIR/"
+glib-compile-schemas "$SCHEMA_DIR"
+export GSETTINGS_SCHEMA_DIR="$SCHEMA_DIR"
+
 PROBE_DIR="$XDG_DATA_HOME/gnome-shell/extensions/probe@test"
 mkdir -p "$PROBE_DIR"
 cp "$ROOT/tests/probe/probe@test/metadata.json" "$PROBE_DIR/"
 sed "s|@REPORT@|$REPORT|" "$ROOT/tests/probe/probe@test/extension.js" > "$PROBE_DIR/extension.js"
 
-if [ -n "${DEEPMON_PREPARE:-}" ]; then
-    bash -c "$DEEPMON_PREPARE"
+HISTORY=""
+if [ "$MODE" = "e2e" ]; then
+    mkdir -p "$XDG_CONFIG_HOME/deepmon"
+    printf 'sk-test000000000000000000\n' > "$XDG_CONFIG_HOME/deepmon/key"
+    chmod 600 "$XDG_CONFIG_HOME/deepmon/key"
+    python3 "$ROOT/tests/mock_server.py" 18087 60 >/dev/null 2>&1 &
+    MOCK_PID=$!
+    sleep 0.5
+    gsettings set org.gnome.shell.extensions.deepmon api-base-url 'http://127.0.0.1:18087/ok'
+    gsettings set org.gnome.shell.extensions.deepmon key-file "$XDG_CONFIG_HOME/deepmon/key"
+    gsettings set org.gnome.shell.extensions.deepmon refresh-minutes 1
+    export PROBE_EXPECT='¥118.40'
+    EXPECT_LABEL='¥118.40'
+    EXPECT_BARS='14'
+    HISTORY="$XDG_STATE_HOME/deepmon/history.json"
+else
+    export PROBE_EXPECT='DeepSeek'
+    EXPECT_LABEL='DeepSeek ⚠'
+    EXPECT_BARS=''
 fi
 
 gsettings set org.gnome.shell enabled-extensions "['probe@test']"
@@ -35,7 +66,8 @@ timeout 200 dbus-run-session -- bash -s <<INNER || true
 set -u
 export HOME="$HOME" XDG_DATA_HOME="$XDG_DATA_HOME" XDG_CONFIG_HOME="$XDG_CONFIG_HOME"
 export XDG_STATE_HOME="$XDG_STATE_HOME" XDG_CACHE_HOME="$XDG_CACHE_HOME"
-export GSETTINGS_BACKEND=keyfile LIBGL_ALWAYS_SOFTWARE=1
+export GSETTINGS_BACKEND=keyfile GSETTINGS_SCHEMA_DIR="$GSETTINGS_SCHEMA_DIR" LIBGL_ALWAYS_SOFTWARE=1
+export PROBE_EXPECT="${PROBE_EXPECT:-}"
 gnome-shell --wayland --headless > "$SHELL_LOG" 2>&1 &
 SHELL_PID=\$!
 for i in \$(seq 1 150); do
@@ -45,8 +77,10 @@ for i in \$(seq 1 150); do
     fi
     sleep 0.2
 done
-for i in \$(seq 1 200); do
-    [ -f "$REPORT" ] && grep -q "\"done\":true" "$REPORT" && break
+for i in \$(seq 1 250); do
+    if [ -f "$REPORT" ] && grep -q '"done":true' "$REPORT"; then
+        break
+    fi
     sleep 0.2
 done
 kill \$SHELL_PID 2>/dev/null || true
@@ -59,26 +93,43 @@ if [ ! -f "$REPORT" ]; then
 fi
 
 if [ "${DEEPMON_VERBOSE:-0}" = "1" ]; then
-    grep -iE 'deepmon|probe|Gjs-CRITICAL|JS ERROR' "$SHELL_LOG" | tail -40 || true
+    grep -iE 'deepmon|probe|Gjs-CRITICAL|JS Error|JS ERROR' "$SHELL_LOG" | tail -40 || true
 fi
 
 cat "$REPORT"
 echo
-python3 - "$REPORT" <<'PY'
+set +e
+python3 - "$REPORT" "$EXPECT_LABEL" "$EXPECT_BARS" "$HISTORY" <<'PY'
 import json
 import sys
 
 report = json.load(open(sys.argv[1]))
+expected_label, expected_bars, history = sys.argv[2], sys.argv[3], sys.argv[4]
 checks = {
     'indicatorFound': report.get('indicatorFound') is True,
-    'labelText': report.get('labelText') == '¥118.40 ↓0.62',
+    'labelText': report.get('labelText') == expected_label,
     'menuItems': len(report.get('menuItems') or []) == 4,
-    'barCount': report.get('barCount') == 14,
     'noLeak': report.get('uiGroupChildrenAfterDisable') == report.get('uiGroupChildrenBefore'),
 }
+if expected_bars:
+    checks['barCount'] = report.get('barCount') == int(expected_bars)
+if history:
+    try:
+        state = json.load(open(history))
+        checks['historyFile'] = state.get('primaryCurrency') == 'CNY' and len(state.get('samples') or []) >= 1
+    except (OSError, ValueError) as error:
+        print('history:', error)
+        checks['historyFile'] = False
 for name, ok in checks.items():
     print(('ok ' if ok else 'FAIL ') + name)
 if 'enableError' in report:
     print('enableError:', report['enableError'])
 sys.exit(0 if all(checks.values()) else 1)
 PY
+STATUS=$?
+set -e
+if [ "$STATUS" -ne 0 ]; then
+    echo "--- shell.log tail ---"
+    tail -40 "$SHELL_LOG"
+fi
+exit $STATUS

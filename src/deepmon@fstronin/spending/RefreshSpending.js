@@ -17,19 +17,19 @@ export class RefreshSpending {
         this._authFingerprint = null;
     }
 
-    async run() {
+    async run({cancellable = null} = {}) {
         if (this._inFlight)
             return this._result({skipped: 'in-flight'});
 
         this._inFlight = true;
         try {
-            return await this._runOnce();
+            return await this._runOnce(cancellable);
         } finally {
             this._inFlight = false;
         }
     }
 
-    async _runOnce() {
+    async _runOnce(cancellable) {
         const keyResult = await this._keyReader.readKey();
         if (!keyResult.ok)
             return this._result({error: {code: keyResult.code, detail: keyResult.detail}});
@@ -42,7 +42,7 @@ export class RefreshSpending {
         if (!loaded.ok)
             return this._result({error: {code: loaded.code, detail: loaded.detail}});
 
-        const response = await this._source.request({key: keyResult.key});
+        const response = await this._source.request({key: keyResult.key, cancellable});
         if (!response.ok) {
             if (response.code === 'auth')
                 this._authFingerprint = keyFingerprint;
@@ -77,6 +77,7 @@ export class RefreshSpending {
             chartDays: this._config.chartDays,
             isAvailable: response.snapshot.isAvailable,
         });
+        summary.balances = response.snapshot.balances;
         this._authFingerprint = null;
 
         return saved.ok

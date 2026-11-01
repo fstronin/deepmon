@@ -1,3 +1,11 @@
+gnome-shell-extension-deepmon (1.0.3) unstable; urgency=medium
+
+  * Popup: drop the other-currency/top-up caption line and the
+    "updated HH:MM" status; the status line now appears only for errors
+    and an exhausted balance.
+
+ -- fstronin <fstronin@localhost>  Sat, 01 Nov 2026 03:30:00 +0000
+
 gnome-shell-extension-deepmon (1.0.2) unstable; urgency=medium
 
   * Fix platform cost parsing: the private endpoint returns bucket cost as

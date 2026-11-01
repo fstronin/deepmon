@@ -49,7 +49,6 @@ function measure(area) {
         menuIsOpen: Boolean(area.menu?.isOpen),
         iconVisible: Boolean(area._icon?.visible),
         iconHasGicon: Boolean(area._icon?.gicon),
-        captionsText: area._captionsLabel?.text ?? null,
         periodDaysText: area._periodDaysLabel?.text ?? null,
         periodValues: ['today', 'week', 'month'].map(key => area._periodLabels?.[key]?.text ?? null),
     };

@@ -50,15 +50,16 @@ export const tests = [
         t.deepEq(barHeights(points), [44, 22, 3, 2]);
     }},
     {name: 'barHeights: все нули не делит на ноль', fn: t => t.deepEq(barHeights([{spend: 0, hasData: true}]), [2])},
-    {name: 'captions: другие валюты и пополнение одной строкой', fn: t => {
-        const data = summary(62);
-        data.balances = [
-            {currency: 'CNY', total: 11840, granted: 1000, toppedUp: 10840},
-            {currency: 'USD', total: 725, granted: 0, toppedUp: 725},
-        ];
-        const view = buildViewModel({summary: data, panelMode: 'both', limitCents: 100});
-        t.deepEq(view.captions, ['USD 7.25', 'грант ¥10.00', 'пополнено ¥108.40']);
+    {name: 'в нормальном состоянии служебных строк нет', fn: t => {
+        const view = buildViewModel({summary: summary(62), panelMode: 'both', limitCents: 100});
+        t.eq(view.statusText, '');
+        t.eq(view.captions, undefined);
         t.eq(view.limitLabel, 'Порог: ¥1.00/день');
+    }},
+    {name: 'ошибка остаётся в статусной строке', fn: t => {
+        const view = buildViewModel({summary: summary(62), error: {code: 'network'},
+            panelMode: 'both', limitCents: 100});
+        t.eq(view.statusText.includes('нет связи'), true);
     }},
     {name: 'периоды без хвоста дней', fn: t => {
         const view = buildViewModel({summary: summary(62), panelMode: 'both'});

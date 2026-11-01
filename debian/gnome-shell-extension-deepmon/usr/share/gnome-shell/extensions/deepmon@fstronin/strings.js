@@ -8,8 +8,6 @@ export const S = {
     },
     popup: {
         title: 'DeepSeek API',
-        updated: 'обновлено {time}',
-        offline: 'нет связи с {time}',
         refresh: 'Обновить сейчас',
         limit: 'Порог: {limit}/день',
         open: 'platform.deepseek.com',
@@ -18,9 +16,6 @@ export const S = {
         week: '7 дней',
         month: '30 дней',
         unavailable: 'баланс исчерпан или недоступен',
-        granted: 'грант {amount}',
-        toppedUp: 'пополнено {amount}',
-        daysSuffix: ' · {days} дн.',
         periodDays: 'данных: {days} из 30',
         approxPrefix: '≈',
     },

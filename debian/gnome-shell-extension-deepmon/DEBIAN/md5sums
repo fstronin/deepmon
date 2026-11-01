@@ -1,5 +1,5 @@
 535f8a3df69c59e6b2b220c45bde1a96  usr/bin/deepmon-key
-15c5f0cfb666ff59028a34a247409819  usr/share/doc/gnome-shell-extension-deepmon/changelog.gz
+f56694888e2bcd12f5bbb857d58a1d8f  usr/share/doc/gnome-shell-extension-deepmon/changelog.gz
 cc22b6c384a60cf70f6042c8a6714a0a  usr/share/doc/gnome-shell-extension-deepmon/copyright
 2ec1d2f2b157f569eb8c831fb62c7177  usr/share/glib-2.0/schemas/gnome-shell-extension-deepmon.gschema.override
 bc2e1ea77fb04fede930d026d6ba5d41  usr/share/glib-2.0/schemas/org.gnome.shell.extensions.deepmon.gschema.xml
@@ -16,8 +16,8 @@ ef1caece49a731c2aa92a647d481acb8  usr/share/gnome-shell/extensions/deepmon@fstro
 2be65bbc648938d2b685e9e21c063050  usr/share/gnome-shell/extensions/deepmon@fstronin/metadata.json
 902e8cb20230b9028fd37b177425b277  usr/share/gnome-shell/extensions/deepmon@fstronin/money/Money.js
 24c71f6d59149217d9bb87e036a5fb9f  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/DayChart.js
-4d212d510657c2e15e1c74ee82ddfe54  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/Indicator.js
-56873a52b4429bb154280d1d6d776ce7  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/format.js
+7ec328a1a0a9bdc76213d41a1bd7ccaf  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/Indicator.js
+5b0d1a681e13b8cefcd9e2660331f1bf  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/format.js
 9975d697ee956a9c36de9e22e448ff90  usr/share/gnome-shell/extensions/deepmon@fstronin/panel/viewState.js
 4602b1b0d52acfda317ad190fa49ca85  usr/share/gnome-shell/extensions/deepmon@fstronin/prefs.js
 a31e6a020b1532d2ad694fd8e134fdf0  usr/share/gnome-shell/extensions/deepmon@fstronin/spending/History.js
@@ -27,7 +27,7 @@ e023006ba59ef08bb676938c19cc55b7  usr/share/gnome-shell/extensions/deepmon@fstro
 eccaddc01d97f5524ad399d621e42dda  usr/share/gnome-shell/extensions/deepmon@fstronin/storage/FileKeyReader.js
 3f22a7ddd75227bc9e70f914a31347a1  usr/share/gnome-shell/extensions/deepmon@fstronin/storage/KeyReader.js
 1b276ffd10fa2d5bb720749c014d5573  usr/share/gnome-shell/extensions/deepmon@fstronin/storage/KeyringKeyReader.js
-4c2fa0722d3efe7fe33517edd85b0c5b  usr/share/gnome-shell/extensions/deepmon@fstronin/strings.js
+94fbe284de3ab5fcdf2e150b59a1813f  usr/share/gnome-shell/extensions/deepmon@fstronin/strings.js
 0f9028d6edbe44dfab4bb9b542d00d91  usr/share/gnome-shell/extensions/deepmon@fstronin/stylesheet.css
 4feea87baddd77b3daade245d1c4c175  usr/share/gnome-shell/extensions/deepmon@fstronin/usage/PlatformUsage.js
 b33a00ba4b1dfc5e2ea362e7d43efcda  usr/share/gnome-shell/extensions/deepmon@fstronin/usage/PlatformUsageSource.js

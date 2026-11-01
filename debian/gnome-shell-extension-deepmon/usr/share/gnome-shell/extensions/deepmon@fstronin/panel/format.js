@@ -49,8 +49,6 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
         statusText = errorText(error);
     else if (summary && summary.isAvailable === false)
         statusText = S.popup.unavailable;
-    else if (summary && summary.updatedAt)
-        statusText = S.popup.updated.replace('{time}', hhmm(summary.updatedAt));
 
     return {
         mode: panelMode,
@@ -74,19 +72,6 @@ export function buildViewModel({summary, notice = null, error = null, panelMode 
             ? S.popup.periodDays.replace('{days}', pluralDays(summary.month.daysWithData))
             : null,
         chart: summary?.chart ?? [],
-        captions: summary && balance
-            ? [
-                ...summary.balances
-                    .filter(item => item.currency !== summary.currency)
-                    .map(item => `${item.currency} ${formatAmount(item.total)}`),
-                balance.granted > 0
-                    ? S.popup.granted.replace('{amount}', format(balance.granted, balance.currency))
-                    : null,
-                balance.toppedUp > 0
-                    ? S.popup.toppedUp.replace('{amount}', format(balance.toppedUp, balance.currency))
-                    : null,
-            ].filter(line => line !== null)
-            : [],
         limitLabel: summary && limitCents > 0
             ? S.popup.limit.replace('{limit}', format(limitCents, summary.currency))
             : S.popup.limit.replace('{limit}', '—'),

@@ -44,8 +44,6 @@ export const Indicator = GObject.registerClass({
             : 'deepmon-panel-label';
 
         this._balanceLabel.text = view.balanceText || '—';
-        this._captionsLabel.text = (view.captions ?? []).join(' · ');
-        this._captionsLabel.visible = (view.captions ?? []).length > 0;
         this._statusLabel.text = view.statusText || '';
         this._statusLabel.visible = Boolean(view.statusText);
 
@@ -94,11 +92,9 @@ export const Indicator = GObject.registerClass({
         const textBox = new St.BoxLayout({vertical: true, x_expand: true});
         this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
         this._balanceLabel = new St.Label({text: '—', style_class: 'deepmon-balance'});
-        this._captionsLabel = new St.Label({text: '', style_class: 'deepmon-caption', visible: false});
         this._statusLabel = new St.Label({text: '', style_class: 'deepmon-status', visible: false});
         textBox.add_child(this._titleLabel);
         textBox.add_child(this._balanceLabel);
-        textBox.add_child(this._captionsLabel);
         textBox.add_child(this._statusLabel);
         row.add_child(textBox);
         header.add_child(row);

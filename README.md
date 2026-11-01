@@ -1,5 +1,7 @@
 # deepmon — DeepSeek API balance and spending in GNOME Shell
 
+[![CI](https://github.com/fstronin/deepmon/actions/workflows/ci.yml/badge.svg)](https://github.com/fstronin/deepmon/actions/workflows/ci.yml)
+
 A GNOME Shell 50 extension: the account balance and today's spending in the top
 bar, a popup with today/7/30-day totals and a per-day chart, and a notification
 when the daily spending limit is crossed. Distributed as a `.deb` package, with

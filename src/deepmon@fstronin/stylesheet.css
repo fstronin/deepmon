@@ -37,7 +37,7 @@
     opacity: 0.8;
 }
 
-.deepmon-title-row {
+.deepmon-value-row {
     spacing: 12px;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .deepmon-ratio {
-    font-size: 1.15em;
+    font-size: 1.5em;
     font-weight: bold;
     opacity: 0.9;
 }

@@ -93,12 +93,13 @@ export const Indicator = GObject.registerClass({
         row.add_child(this._icon);
 
         const textBox = new St.BoxLayout({vertical: true, x_expand: true});
+        this._titleLabel = new St.Label({text: S.popup.title, style_class: 'deepmon-caption'});
 
-        // Первая строка: подпись слева, отношение к порогу справа — один базовый уровень.
-        const titleRow = new St.BoxLayout({x_expand: true, style_class: 'deepmon-title-row'});
-        this._titleLabel = new St.Label({
-            text: S.popup.title,
-            style_class: 'deepmon-caption',
+        // Баланс и отношение к порогу — одна строка, оба числа главные.
+        const valueRow = new St.BoxLayout({x_expand: true, style_class: 'deepmon-value-row'});
+        this._balanceLabel = new St.Label({
+            text: '—',
+            style_class: 'deepmon-balance',
             x_expand: true,
             y_align: Clutter.ActorAlign.CENTER,
         });
@@ -109,13 +110,12 @@ export const Indicator = GObject.registerClass({
             y_align: Clutter.ActorAlign.CENTER,
             visible: false,
         });
-        titleRow.add_child(this._titleLabel);
-        titleRow.add_child(this._ratioLabel);
+        valueRow.add_child(this._balanceLabel);
+        valueRow.add_child(this._ratioLabel);
 
-        this._balanceLabel = new St.Label({text: '—', style_class: 'deepmon-balance'});
         this._statusLabel = new St.Label({text: '', style_class: 'deepmon-status', visible: false});
-        textBox.add_child(titleRow);
-        textBox.add_child(this._balanceLabel);
+        textBox.add_child(this._titleLabel);
+        textBox.add_child(valueRow);
         textBox.add_child(this._statusLabel);
         row.add_child(textBox);
         header.add_child(row);
